@@ -1,0 +1,81 @@
+\documentclass[a4paper]{article}
+
+\usepackage{fontspec}
+\setmainfont{Linux Libertine}
+\setsansfont{Libertinus Sans}
+\setmonofont{Inconsolata}
+
+\usepackage{hyperref}
+
+\usepackage{tcolorbox}
+\tcbuselibrary{listings,breakable}
+\tcbset{listing engine=listings,colframe=black,colback=white}
+\NewDocumentEnvironment {exampleside} {}
+  {%
+    \tcblisting{listing side text,righthand width=.4\textwidth}%
+  }
+  {%
+    \endtcblisting
+  }
+
+\NewDocumentEnvironment { presentcommand } { b }
+  {%
+    \vspace*{0.5\baselineskip}\noindent\fbox{%
+      \begin{minipage}{\dimexpr\textwidth-2\fboxsep-2\fboxrule}
+        #1
+      \end{minipage}}\vspace*{0.5\baselineskip}
+  }
+  { }
+
+\NewDocumentCommand \cmd { m } { \texttt{\textbackslash#1} }
+\NewDocumentCommand \env { m m m }
+  {
+    \texttt{%
+      \textbackslash begin\{#1\}\{$\langle#2\rangle$\} \textrm{#3} %
+      \textbackslash end\{#1\}%
+    }%
+  }
+
+\usepackage{simplebnf}
+
+\title{%
+  \textsf{simplebnf} --- A simple package to format Backus-Naur form%
+  \footnote{This file describes v0.0.1.}}
+\author{Jay Lee\footnote{E-mail: %
+  \href{mailto:jaeho.lee@snu.ac.kr}{\texttt{jaeho.lee@snu.ac.kr}}}}
+\date{2019/12/23}
+
+\begin{document}
+\maketitle
+
+\begin{presentcommand}
+  \cmd{bnfexpr} \cmd{bnfannot}
+\end{presentcommand}
+The \cmd{bnfexpr} and the \cmd{bnfannot} commands are simply wrappers around
+\cmd{texttt} and \cmd{textit}, respectively.
+
+\begin{presentcommand}
+  \env{bnfgrammar}{term}{text}
+\end{presentcommand}
+The \textit{term} argument of the \texttt{bnfgrammar} environment is the term
+to define a grammar.
+The text inside the environment should be a comma-separated list of keypairs.
+Each keypair represents an alternative syntactic form of the \textit{term} and
+its annotation, delimited with a colon(\verb/:/).
+
+A sample code and the result is shown below:
+\begin{exampleside}
+\begin{bnfgrammar}{\bnfexpr{v}}
+  n: integer,
+  $\lambda$x.e: abstraction
+\end{bnfgrammar}
+
+\begin{bnfgrammar}{\bnfexpr{C}}
+  \bnfexpr{[]}: hole,
+  \bnfexpr{C\,e}: application 1,
+  \bnfexpr{v\,C}: application 2,
+  \bnfexpr{C\,+\,e}: addition 1,
+  \bnfexpr{v\,+\,C}: addition 2
+\end{bnfgrammar}
+\end{exampleside}
+\end{document}
