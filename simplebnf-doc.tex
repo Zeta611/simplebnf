@@ -9,14 +9,10 @@
 
 \usepackage{tcolorbox}
 \tcbuselibrary{listings,breakable}
-\tcbset{listing engine=listings,colframe=black,colback=white}
+\tcbset{listing engine=listings,colframe=black,colback=white,size=small}
 \NewDocumentEnvironment {exampleside} {}
-  {%
-    \tcblisting{listing side text,righthand width=.4\textwidth}%
-  }
-  {%
-    \endtcblisting
-  }
+  { \tcblisting{listing side text,righthand width=.4\textwidth} }
+  { \endtcblisting }
 
 \NewDocumentEnvironment { presentcommand } { b }
   {%
@@ -28,10 +24,10 @@
   { }
 
 \NewDocumentCommand \cmd { m } { \texttt{\textbackslash#1} }
-\NewDocumentCommand \env { m m m }
+\NewDocumentCommand \env { m m }
   {
     \texttt{%
-      \textbackslash begin\{#1\}\{$\langle#2\rangle$\} \textrm{#3} %
+      \textbackslash begin\{#1\} \textrm{#2} %
       \textbackslash end\{#1\}%
     }%
   }
@@ -40,7 +36,7 @@
 
 \title{%
   \textsf{simplebnf} --- A simple package to format Backus-Naur form%
-  \footnote{This file describes v0.0.1.}}
+  \footnote{This file describes v0.1.0.}}
 \author{Jay Lee\footnote{E-mail: %
   \href{mailto:jaeho.lee@snu.ac.kr}{\texttt{jaeho.lee@snu.ac.kr}}}}
 \date{2019/12/23}
@@ -55,27 +51,32 @@ The \cmd{bnfexpr} and the \cmd{bnfannot} commands are simply wrappers around
 \cmd{texttt} and \cmd{textit}, respectively.
 
 \begin{presentcommand}
-  \env{bnfgrammar}{term}{text}
+  \env{bnfgrammar}{text}
 \end{presentcommand}
 The \textit{term} argument of the \texttt{bnfgrammar} environment is the term
 to define a grammar.
-The text inside the environment should be a comma-separated list of keypairs.
-Each keypair represents an alternative syntactic form of the \textit{term} and
-its annotation, delimited with a colon(\verb/:/).
+The text inside the environment should be formatted as:
+\begin{equation*}
+  \bnfexpr{term} \Coloneqq \langle\textit{keypairs}\rangle
+\end{equation*}
+where each pair of \textit{keypairs} represents an alternative syntactic form
+of the \textit{term} and its annotation, delimited with a colon(\verb/:/).
+If you don't need annotations, simply omit the colons and annotations
+altogether.
 
 A sample code and the result is shown below:
 \begin{exampleside}
-\begin{bnfgrammar}{\bnfexpr{v}}
-  n: integer,
-  $\lambda$x.e: abstraction
+\begin{bnfgrammar}
+  v ::= n | $\lambda$x.e
 \end{bnfgrammar}
 
-\begin{bnfgrammar}{\bnfexpr{C}}
-  \bnfexpr{[]}: hole,
-  \bnfexpr{C\,e}: application 1,
-  \bnfexpr{v\,C}: application 2,
-  \bnfexpr{C\,+\,e}: addition 1,
-  \bnfexpr{v\,+\,C}: addition 2
+\begin{bnfgrammar}
+  C ::=
+    []:      hole
+  | C\,e:    application 1
+  | v\,C:    application 2
+  | C\,+\,e: addition 1
+  | v\,+\,C: addition 2
 \end{bnfgrammar}
 \end{exampleside}
 \end{document}

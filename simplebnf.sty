@@ -15,7 +15,7 @@
 \ProvidesExplPackage
   {simplebnf}
   {2019/12/23}
-  {0.0.1}
+  {0.1.0}
   {A simple package to format Backus–Naur form}
 
 
@@ -23,41 +23,64 @@
 
 \tl_new:N \g__simplebnf_defeq_tl
 \tl_gset:Nn \g__simplebnf_defeq_tl { \ensuremath{\Coloneqq} }
+
 \tl_new:N \g__simplebnf_defor_tl
 \tl_gset:Nn \g__simplebnf_defor_tl { \ensuremath{|} }
-\tl_new:N \l__table_tl
+
+\seq_new:N \l__input_seq
+\tl_new:N \l__term_tl
+\tl_new:N \l__body_tl
+\tl_new:N \l__keypairs_tl
+\seq_new:N \l__keypairs_seq
 
 \NewDocumentCommand \bnfexpr { m } { \texttt { #1 } }
 \NewDocumentCommand \bnfannot { m } { \textit{ #1 } }
 
-\NewDocumentEnvironment { bnfgrammar } { m +b }
+\NewDocumentEnvironment { bnfgrammar } { +b }
   {
-    \clist_set:Nn \l_tmpa_clist { #2 }
+    % Store the term to define grammar in \l__term_tl and the
+    % (alternative form: annotion) keypairs in \l__keypairs_tl
+    \regex_split:nnN { ::= } { #1 } \l__input_seq
+    \seq_pop_left:NN \l__input_seq \l__term_tl
+    \seq_pop_left:NN \l__input_seq \l__keypairs_tl
+
+    % Store keypairs
+    \seq_set_split:NnV \l__keypairs_seq { | } \l__keypairs_tl
 
     \begin{center}
       \tl_set:Nn \l__table_tl
         {
           \begin{tabular}{lcll}
-            #1 & \g__simplebnf_defeq_tl &
+            \bnfexpr { \l__term_tl } & \g__simplebnf_defeq_tl &
         }
 
       \bool_set_false:N \l_tmpa_bool
 
-      \clist_map_inline:Nn \l_tmpa_clist
+      \seq_map_inline:Nn \l__keypairs_seq
         {
-          \seq_set_split:NVn \l_tmpa_seq { \c_colon_str } { ##1 }
-          \seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
-          \seq_pop_left:NN \l_tmpa_seq \l_tmpb_tl
-          \tl_set:Nx \l_tmpa_tl { \bnfexpr { \l_tmpa_tl } }
-          \tl_set:Nx \l_tmpb_tl { \bnfannot { \l_tmpb_tl } }
-
           \bool_if:NTF \l_tmpa_bool
             { \tl_put_right:Nn \l__table_tl { \\ & \g__simplebnf_defor_tl & } }
             { \bool_set_true:N \l_tmpa_bool }
 
-          \tl_put_right:NV \l__table_tl \l_tmpa_tl
-          \tl_put_right:Nn \l__table_tl { & }
-          \tl_put_right:NV \l__table_tl \l_tmpb_tl
+          \regex_split:nnNTF { : } { ##1 } \l_tmpa_seq
+            {
+              \seq_pop_left:NNT \l_tmpa_seq \l_tmpa_tl
+                {
+                  \tl_set:Nx \l_tmpa_tl { \bnfexpr { \l_tmpa_tl } }
+                  \tl_put_right:NV \l__table_tl \l_tmpa_tl
+                }
+
+              \tl_put_right:Nn \l__table_tl { & }
+
+              \seq_pop_left:NNT \l_tmpa_seq \l_tmpb_tl
+                {
+                  \tl_set:Nx \l_tmpb_tl { \bnfannot { \l_tmpb_tl } }
+                  \tl_put_right:NV \l__table_tl \l_tmpb_tl
+                }
+            }
+            {
+              \tl_put_right:Nn \l__table_tl { \bnfexpr { ##1 } & }
+            }
         }
 
       \tl_put_right:Nn \l__table_tl { \end{tabular} }
