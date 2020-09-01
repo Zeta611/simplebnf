@@ -13,13 +13,11 @@
 \RequirePackage{mathtools}
 \ProvidesExplPackage
   {simplebnf}
-  {2019/12/23}
-  {0.1.0}
+  {2020/09/01}
+  {0.2.0}
   {A simple package to format Backus–Naur form}
 
-
 \cs_generate_variant:Nn \seq_set_split:Nnn {NVn}
-
 \tl_new:N \g__simplebnf_defeq_tl
 \tl_gset:Nn \g__simplebnf_defeq_tl { \ensuremath{\Coloneqq} }
 
@@ -27,63 +25,92 @@
 \tl_gset:Nn \g__simplebnf_defor_tl { \ensuremath{|} }
 
 \seq_new:N \l__input_seq
+\seq_new:N \l__term_seq
 \tl_new:N \l__term_tl
-\tl_new:N \l__body_tl
 \tl_new:N \l__keypairs_tl
+\tl_new:N \l__table_tl
 \seq_new:N \l__keypairs_seq
+\bool_new:N \l__first_rhs
+
+%% Typeset a single rhs of a production.
+%% \l__first_rhs = true  => `::=' already typeset
+%% \l__first_rhs = false => move to a newline and typeset `|'
+%% #1 - rhs : annot or rhs
+\cs_new:Nn \simplebnf_typeset_rhs:n
+{
+  \bool_if:NTF \l__first_rhs
+    {
+      \bool_set_false:N \l__first_rhs
+    }
+    {
+      \tl_put_right:Nn \l__table_tl { \\ & \g__simplebnf_defor_tl & }
+    }
+
+  \regex_split:nnNTF { : } { #1 } \l_tmpa_seq
+    {
+      \seq_pop_left:NNT \l_tmpa_seq \l_tmpa_tl
+        {
+          \tl_set:Nx \l_tmpa_tl { \bnfexpr { \l_tmpa_tl } }
+          \tl_put_right:NV \l__table_tl \l_tmpa_tl
+        }
+
+      \tl_put_right:Nn \l__table_tl { & }
+
+      \seq_pop_left:NNT \l_tmpa_seq \l_tmpb_tl
+        {
+          \tl_set:Nx \l_tmpb_tl { \bnfannot { \l_tmpb_tl } }
+          \tl_put_right:NV \l__table_tl \l_tmpb_tl
+        }
+    }
+    {
+      \tl_put_right:Nn \l__table_tl { \bnfexpr { #1 } &}
+    }
+}
 
 \NewDocumentCommand \bnfexpr { m } { \texttt { #1 } }
 \NewDocumentCommand \bnfannot { m } { \textit{ #1 } }
 
 \NewDocumentEnvironment { bnfgrammar } { +b }
   {
-    % Store the term to define grammar in \l__term_tl and the
-    % (alternative form: annotion) keypairs in \l__keypairs_tl
-    \regex_split:nnN { ::= } { #1 } \l__input_seq
-    \seq_pop_left:NN \l__input_seq \l__term_tl
-    \seq_pop_left:NN \l__input_seq \l__keypairs_tl
-
-    % Store keypairs
-    \seq_set_split:NnV \l__keypairs_seq { | } \l__keypairs_tl
-
+    %% \l__input_seq is a list of term definitions.
+    \regex_split:nnN { ;; } { #1 } \l__input_seq
     \begin{center}
       \tl_set:Nn \l__table_tl
         {
           \begin{tabular}{lcll}
+        }
+    \bool_set_true:N \l_tmp_first_term % Is this the first term in this grammar?
+    \seq_map_inline:Nn \l__input_seq
+      {
+        %% \l__term_seq    - (term, rhses)...
+        %% \l__term_tl     - term
+        %% \l__keypairs_tl - rhses
+        \regex_split:nnN { ::= } { ##1 } \l__term_seq
+        \seq_pop_left:NN \l__term_seq \l__term_tl
+        \seq_pop_left:NN \l__term_seq \l__keypairs_tl
+
+        \regex_replace_once:nnN { ^\s+ } {} \l__term_tl
+
+        \bool_if:NTF \l_tmp_first_term
+          {
+            \bool_set_false:N \l_tmp_first_term
+          }
+          {
+            \tl_put_right:Nn \l__table_tl { \\ }
+          }
+        \tl_put_right:Nx \l__table_tl
+          {
             \bnfexpr { \l__term_tl } & \g__simplebnf_defeq_tl &
-        }
+          }
+        %% \l__keypairs_seq - (rhs:annot | rhs)...
+        \seq_set_split:NnV \l__keypairs_seq { | } \l__keypairs_tl
 
-      \bool_set_false:N \l_tmpa_bool
+        \bool_set_true:N \l__first_rhs
+        \seq_map_function:NN \l__keypairs_seq \simplebnf_typeset_rhs:n
+      }
 
-      \seq_map_inline:Nn \l__keypairs_seq
-        {
-          \bool_if:NTF \l_tmpa_bool
-            { \tl_put_right:Nn \l__table_tl { \\ & \g__simplebnf_defor_tl & } }
-            { \bool_set_true:N \l_tmpa_bool }
-
-          \regex_split:nnNTF { : } { ##1 } \l_tmpa_seq
-            {
-              \seq_pop_left:NNT \l_tmpa_seq \l_tmpa_tl
-                {
-                  \tl_set:Nx \l_tmpa_tl { \bnfexpr { \l_tmpa_tl } }
-                  \tl_put_right:NV \l__table_tl \l_tmpa_tl
-                }
-
-              \tl_put_right:Nn \l__table_tl { & }
-
-              \seq_pop_left:NNT \l_tmpa_seq \l_tmpb_tl
-                {
-                  \tl_set:Nx \l_tmpb_tl { \bnfannot { \l_tmpb_tl } }
-                  \tl_put_right:NV \l__table_tl \l_tmpb_tl
-                }
-            }
-            {
-              \tl_put_right:Nn \l__table_tl { \bnfexpr { ##1 } & }
-            }
-        }
-
-      \tl_put_right:Nn \l__table_tl { \end{tabular} }
-      \tl_use:N \l__table_tl
+    \tl_put_right:Nn \l__table_tl { \end{tabular} }
+    \tl_use:N \l__table_tl
     \end{center}
   }
   { }
