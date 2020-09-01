@@ -1,82 +1,76 @@
 \documentclass[a4paper]{article}
 
-\usepackage{fontspec}
-\setmainfont{Linux Libertine}
-\setsansfont{Libertinus Sans}
-\setmonofont{Inconsolata}
-
+\usepackage{simplebnf}
 \usepackage{hyperref}
 
 \usepackage{tcolorbox}
 \tcbuselibrary{listings,breakable}
 \tcbset{listing engine=listings,colframe=black,colback=white,size=small}
+
 \NewDocumentEnvironment {exampleside} {}
-  { \tcblisting{listing side text,righthand width=.4\textwidth} }
+  { \tcblisting{listing side text,righthand width=.5\textwidth} }
   { \endtcblisting }
+
+\NewDocumentCommand \cmd { m } {\texttt{\textbackslash#1}}
 
 \NewDocumentEnvironment { presentcommand } { b }
   {%
     \vspace*{0.5\baselineskip}\noindent\fbox{%
-      \begin{minipage}{\dimexpr\textwidth-2\fboxsep-2\fboxrule}
-        #1
-      \end{minipage}}\vspace*{0.5\baselineskip}
+    \begin{minipage}{\dimexpr\textwidth-2\fboxsep-2\fboxrule}
+      #1
+    \end{minipage}}\vspace*{0.5\baselineskip}
   }
   { }
 
-\NewDocumentCommand \cmd { m } { \texttt{\textbackslash#1} }
 \NewDocumentCommand \env { m m }
   {
     \texttt{%
-      \textbackslash begin\{#1\} \textrm{#2} %
+      \textbackslash begin\{#1\} \textrm{#2}%
       \textbackslash end\{#1\}%
     }%
   }
 
-\usepackage{simplebnf}
-
 \title{%
   \textsf{simplebnf} --- A simple package to format Backus-Naur form%
-  \footnote{This file describes v0.1.0.}}
+  \footnote{This file describes v0.2.0.}}
 \author{Jay Lee\footnote{E-mail: %
   \href{mailto:jaeho.lee@snu.ac.kr}{\texttt{jaeho.lee@snu.ac.kr}}}}
-\date{2019/12/23}
+\date{2020/09/01}
 
 \begin{document}
 \maketitle
 
+This package provides a simple way to typeset grammars written in Backus-Naur form (BNF).
+
 \begin{presentcommand}
   \cmd{bnfexpr} \cmd{bnfannot}
 \end{presentcommand}
-The \cmd{bnfexpr} and the \cmd{bnfannot} commands are simply wrappers around
-\cmd{texttt} and \cmd{textit}, respectively.
+These commands are wrappers around \cmd{texttt} and \cmd{textit} respectively.
 
 \begin{presentcommand}
   \env{bnfgrammar}{text}
 \end{presentcommand}
-The \textit{term} argument of the \texttt{bnfgrammar} environment is the term
-to define a grammar.
-The text inside the environment should be formatted as:
-\begin{equation*}
-  \bnfexpr{term} \Coloneqq \langle\textit{keypairs}\rangle
-\end{equation*}
-where each pair of \textit{keypairs} represents an alternative syntactic form
-of the \textit{term} and its annotation, delimited with a colon(\verb/:/).
-If you don't need annotations, simply omit the colons and annotations
-altogether.
+can be used to typeset BNF grammars. The \textit{text} inside the environment should be formatted as:
+\begin{verbatim}
+  term1 ::= rhs1
+  ;;
+  term2 ::= rhs2
+  ;;
+  ...
+  termk ::= rhsk
+\end{verbatim}
+where each of the \textit{rhs} represents alternative syntactic forms of the \textit{term}. An annotation may accompany each alternative in which case the alternative must be separated from its annotation with a colon (\verb/:/). If you don't need annotations, simply omit the colons and annotations altogether. The alternatives themselves are separated using the pipe symbol (\verb/|/).
 
 A sample code and the result is shown below:
 \begin{exampleside}
-\begin{bnfgrammar}
-  v ::= n | $\lambda$x.e
-\end{bnfgrammar}
-
-\begin{bnfgrammar}
-  C ::=
-    []:      hole
-  | C\,e:    application 1
-  | v\,C:    application 2
-  | C\,+\,e: addition 1
-  | v\,+\,C: addition 2
-\end{bnfgrammar}
+  \begin{bnfgrammar}
+    expr ::=
+      expr + term : sum
+    | term        : term
+    ;;
+    term ::=
+      term * a : product
+    | a        : variable
+  \end{bnfgrammar}
 \end{exampleside}
 \end{document}
