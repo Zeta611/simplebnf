@@ -8,7 +8,7 @@
 \tcbset{listing engine=listings,colframe=black,colback=white,size=small}
 
 \NewDocumentEnvironment {exampleside} {}
-  { \tcblisting{listing side text,righthand width=.5\textwidth} }
+  { \tcblisting{listing side text,righthand width=.55\textwidth} }
   { \endtcblisting }
 
 \NewDocumentCommand \cmd { m } {\texttt{\textbackslash#1}}
@@ -32,10 +32,10 @@
 
 \title{%
   \textsf{simplebnf} --- A simple package to format Backus-Naur form%
-  \footnote{This file describes v0.2.0.}}
+  \footnote{This file describes v0.3.0.}}
 \author{Jay Lee\footnote{E-mail: %
   \href{mailto:jaeho.lee@snu.ac.kr}{\texttt{jaeho.lee@snu.ac.kr}}}}
-\date{2020/09/01}
+\date{2022/05/07}
 
 \begin{document}
 \maketitle
@@ -64,6 +64,8 @@ where each of the \textit{rhs} represents alternative syntactic forms of the \te
 A sample code and the result is shown below:
 \begin{exampleside}
   \begin{bnfgrammar}
+    a \in \textit{Vars}
+    ;;
     expr ::=
       expr + term : sum
     | term        : term
@@ -73,4 +75,58 @@ A sample code and the result is shown below:
     | a        : variable
   \end{bnfgrammar}
 \end{exampleside}
+
+Annotations can also be provided on left-hand sides, to label the nonterminal instead of a specific production.
+\begin{exampleside}
+  \begin{bnfgrammar}
+    a : Variables \in \textit{Vars}
+    ;;
+    expr : Expressions ::=
+      expr + term
+    | term
+    ;;
+    term ::=
+      term * a
+    | a
+  \end{bnfgrammar}
+\end{exampleside}
+
+You can also provide an optional specification to the grammar environment, to redefine alignment or spacing.
+\begin{tcblisting}{text above listing}
+  \begin{bnfgrammar}[lr@{\hspace{4pt}}c@{\hspace{2pt}}ll]
+    a : Variables \in \textit{Vars}
+    ;;
+    expr ::=
+      expr + term : sum
+    | term        : term
+    ;;
+    term ::=
+      term * a : product
+    | a        : variable
+  \end{bnfgrammar}
+\end{tcblisting}
+
+If you want to typeset multiple productions on a single line, you can use double vertical bars by default.
+\begin{exampleside}
+  \begin{bnfgrammar}
+    a \in \textit{Vars}
+    ;;
+    expr ::= expr + term || term
+    ;;
+    term ::= term * a || a
+  \end{bnfgrammar}
+\end{exampleside}
+
+The second and third optional arguments specify regular expressions for the line-breaking and non-breaking RHS seperators:
+\begin{tcblisting}{text above listing}
+  \begin{bnfgrammar}[llcll][\|\|][\|]
+    a \in \textit{Vars}
+    ;;
+    expr ::= expr + term | term
+    ;;
+    term ::= term * a
+    || a
+  \end{bnfgrammar}
+\end{tcblisting}
+
 \end{document}
