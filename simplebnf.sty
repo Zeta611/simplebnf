@@ -51,7 +51,10 @@
       \tl_put_right:Nn \l__table_tl { \\ && \g__simplebnf_defor_tl & }
     }
 
-  \regex_split:nnNTF { : } { #1 } \l_tmpa_seq
+  \tl_set:Nn \l_tmpa_tl { #1 }
+  \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
+  \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
+  \regex_split:nVNTF { : } \l_tmpa_tl \l_tmpa_seq
     {
       \seq_pop_left:NNT \l_tmpa_seq \l_tmpa_tl
         {
@@ -68,7 +71,6 @@
         }
     }
     {
-      \tl_set:Nn \l_tmpa_tl { #1 }
       \regex_replace_all:NnN \g_simplebnf_rhs_nb_r { \c{g__simplebnf_defor_tl} } \l_tmpa_tl
 
       \tl_put_right:Nx \l__table_tl { \bnfexpr { \l_tmpa_tl } }
@@ -80,11 +82,13 @@
 %% #1 - lhs : either term or (term : annotation)
 \cs_new:Nn \simplebnf_typeset_lhs:n
 {
-  \regex_split:nVNTF { : } #1 \l_tmpa_seq
+  \tl_set:Nx \l_tmpa_tl { #1 }
+  \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
+  \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
+
+  \regex_split:nVNTF { : } \l_tmpa_tl \l_tmpa_seq
     {
       \seq_pop_right:NN \l_tmpa_seq \l_tmpa_tl
-      \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
-      \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
       \tl_put_right:Nx \l__table_tl
         {
           \bnfannot{\l_tmpa_tl}
@@ -98,7 +102,7 @@
     {
       \tl_put_right:Nx \l__table_tl
         {
-          & \bnfexpr { #1 }
+          & \bnfexpr { \l_tmpa_tl }
         }
     }
 }
@@ -145,8 +149,6 @@
             \seq_pop_left:NN \l__term_seq \l__term_tl
             \seq_pop_left:NN \l__term_seq \l__keypairs_tl
 
-            \regex_replace_once:nnN { ^\s+ } {} \l__term_tl
-
             \simplebnf_typeset_lhs:n{\l__term_tl}
             \tl_put_right:Nx \l__table_tl
               {
@@ -164,6 +166,7 @@
               {
                 %% \l__term_seq - (lhs, rhs)
                 \seq_pop_left:NN \l__term_seq \l_tmpa_tl
+
                 \simplebnf_typeset_lhs:n{\l_tmpa_tl}
                 \tl_put_right:Nn \l__table_tl
                   {
