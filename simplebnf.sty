@@ -94,6 +94,7 @@
   \regex_split:nVNTF { : } \l_tmpa_tl \l_tmpa_seq
     {
       \seq_pop_right:NN \l_tmpa_seq \l_tmpa_tl
+      \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
       \tl_put_right:No \l__table_tl
         {
           \exp_after:wN\bnfannot\exp_after:wN{\l_tmpa_tl} &
