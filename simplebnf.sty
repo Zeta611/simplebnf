@@ -56,23 +56,30 @@
     {
       \seq_pop_left:NNT \l_tmpa_seq \l_tmpa_tl
         {
-          \tl_put_right:Nx \l__table_tl { \bnfexpr { \l_tmpa_tl } }
           \regex_replace_all:NnN \g_simplebnf_rhs_nb_r { \c{SimpleBNFDefOr} } \l_tmpa_tl
+          % Expand only the local temporary variable.
+          \tl_put_right:No \l__table_tl
+             {
+               \exp_after:wN\bnfexpr\exp_after:wN{\l_tmpa_tl} &
+             }
         }
-
-      \tl_put_right:Nn \l__table_tl { & }
 
       \seq_pop_left:NNT \l_tmpa_seq \l_tmpb_tl
         {
-          \tl_set:Nx \l_tmpb_tl { \bnfannot { \l_tmpb_tl } }
-          \tl_put_right:NV \l__table_tl \l_tmpb_tl
+          \regex_replace_once:nnN { ^\s+ } {} \l_tmpb_tl
+          \tl_put_right:No \l__table_tl
+            {
+              \exp_after:wN\bnfannot\exp_after:wN{\l_tmpb_tl}
+            }
         }
     }
     {
       \regex_replace_all:NnN \g_simplebnf_rhs_nb_r { \c{SimpleBNFDefOr} } \l_tmpa_tl
 
-      \tl_put_right:Nx \l__table_tl { \bnfexpr { \l_tmpa_tl } }
-      \tl_put_right:Nn \l__table_tl { & }
+      \tl_put_right:No \l__table_tl
+         {
+           \exp_after:wN\bnfexpr\exp_after:wN{\l_tmpa_tl}
+         }
     }
 }
 
@@ -87,20 +94,20 @@
   \regex_split:nVNTF { : } \l_tmpa_tl \l_tmpa_seq
     {
       \seq_pop_right:NN \l_tmpa_seq \l_tmpa_tl
-      \tl_put_right:Nx \l__table_tl
+      \tl_put_right:No \l__table_tl
         {
-          \bnfannot{\l_tmpa_tl}
+          \exp_after:wN\bnfannot\exp_after:wN{\l_tmpa_tl} &
         }
       \seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
-      \tl_put_right:Nx \l__table_tl
+      \tl_put_right:No \l__table_tl
         {
-          & \bnfexpr { \l_tmpa_tl }
+          \exp_after:wN\bnfexpr\exp_after:wN{\l_tmpa_tl}
         }
     }
     {
-      \tl_put_right:Nx \l__table_tl
+      \tl_put_right:No \l__table_tl
         {
-          & \bnfexpr { \l_tmpa_tl }
+          \exp_after:wN&\exp_after:wN\bnfexpr\exp_after:wN{\l_tmpa_tl}
         }
     }
 }
@@ -148,7 +155,7 @@
             \seq_pop_left:NN \l__term_seq \l__keypairs_tl
 
             \simplebnf_typeset_lhs:n{\l__term_tl}
-            \tl_put_right:Nx \l__table_tl
+            \tl_put_right:Nn \l__table_tl
               {
                 & \SimpleBNFDefEq &
               }
