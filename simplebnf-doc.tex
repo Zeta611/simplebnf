@@ -43,9 +43,24 @@
 This package provides a simple way to typeset grammars written in Backus-Naur form (BNF).
 
 \begin{presentcommand}
-  \cmd{bnfexpr} \cmd{bnfannot}
+  \cmd{SimpleBNFDefEq}
 \end{presentcommand}
-These commands are wrappers around \cmd{texttt} and \cmd{textit} respectively.
+This command is used to typeset the definition symbol separate a nonterminal from its productions. It defaults to \SimpleBNFDefEq. It can be redefined to customized output using \verb|RenewDocumentCommand|.
+
+\begin{presentcommand}
+  \cmd{SimpleBNFDefOr}
+\end{presentcommand}
+This command is used to typeset the separator symbol between productions. It defaults to \SimpleBNFDefOr. It can be redefined to customized output using \verb|RenewDocumentCommand|.
+
+\begin{presentcommand}
+  \cmd{bnfexpr}
+\end{presentcommand}
+This command is used when typesetting the BNF nonterminal and productions. It defaults to a wrappers around \cmd{texttt}. It can be redefined to customized output using \verb|RenewDocumentCommand|.
+
+\begin{presentcommand}
+ \cmd{bnfannot}
+\end{presentcommand}
+This command is used when typesetting the annotations on nonterminals and productions. It defaults to a wrappers around \cmd{textit}. It can be redefined to customized output using \verb|RenewDocumentCommand|.
 
 \begin{presentcommand}
   \env{bnfgrammar}{text}
