@@ -20,11 +20,9 @@
 \cs_generate_variant:Nn \regex_split:nnNTF {nVNTF}
 \cs_generate_variant:Nn \regex_split:NnN {NVN}
 
-\tl_new:N \g__simplebnf_defeq_tl
-\tl_gset:Nn \g__simplebnf_defeq_tl { \ensuremath{\Coloneqq} }
+\NewDocumentCommand\SimpleBNFDefEq{}{\ensuremath{\Coloneqq}}
 
-\tl_new:N \g__simplebnf_defor_tl
-\tl_gset:Nn \g__simplebnf_defor_tl { \ensuremath{|} }
+\NewDocumentCommand\SimpleBNFDefOr{}{\ensuremath{|}}
 
 \seq_new:N \l__input_seq
 \seq_new:N \l__term_seq
@@ -48,7 +46,7 @@
       \bool_set_false:N \l__first_rhs
     }
     {
-      \tl_put_right:Nn \l__table_tl { \\ && \g__simplebnf_defor_tl & }
+      \tl_put_right:Nn \l__table_tl { \\ && \SimpleBNFDefOr & }
     }
 
   \tl_set:Nn \l_tmpa_tl { #1 }
@@ -58,8 +56,8 @@
     {
       \seq_pop_left:NNT \l_tmpa_seq \l_tmpa_tl
         {
-          \regex_replace_all:NnN \g_simplebnf_rhs_nb_r { \c{g__simplebnf_defor_tl} } \l_tmpa_tl
           \tl_put_right:Nx \l__table_tl { \bnfexpr { \l_tmpa_tl } }
+          \regex_replace_all:NnN \g_simplebnf_rhs_nb_r { \c{SimpleBNFDefOr} } \l_tmpa_tl
         }
 
       \tl_put_right:Nn \l__table_tl { & }
@@ -71,7 +69,7 @@
         }
     }
     {
-      \regex_replace_all:NnN \g_simplebnf_rhs_nb_r { \c{g__simplebnf_defor_tl} } \l_tmpa_tl
+      \regex_replace_all:NnN \g_simplebnf_rhs_nb_r { \c{SimpleBNFDefOr} } \l_tmpa_tl
 
       \tl_put_right:Nx \l__table_tl { \bnfexpr { \l_tmpa_tl } }
       \tl_put_right:Nn \l__table_tl { & }
@@ -152,7 +150,7 @@
             \simplebnf_typeset_lhs:n{\l__term_tl}
             \tl_put_right:Nx \l__table_tl
               {
-                & \g__simplebnf_defeq_tl &
+                & \SimpleBNFDefEq &
               }
             %% \l__keypairs_seq - (rhs:annot | rhs)...
             \regex_split:NVN \g_simplebnf_rhs_newline_r \l__keypairs_tl \l__keypairs_seq
