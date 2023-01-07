@@ -32,10 +32,10 @@
 
 \title{%
   \textsf{simplebnf} --- A simple package to format Backus-Naur form%
-  \footnote{This file describes v0.3.1.}}
+  \footnote{This file describes v0.3.2.}}
 \author{Jay Lee\footnote{E-mail: %
   \href{mailto:jaeho.lee@snu.ac.kr}{\texttt{jaeho.lee@snu.ac.kr}}}}
-\date{2022/05/08}
+\date{2023/01/07}
 
 \begin{document}
 \maketitle
@@ -45,12 +45,19 @@ This package provides a simple way to typeset grammars written in Backus-Naur fo
 \begin{presentcommand}
   \cmd{SimpleBNFDefEq}
 \end{presentcommand}
-This command is used to typeset the definition symbol separate a nonterminal from its productions. It defaults to \SimpleBNFDefEq. It can be redefined to customized output using \verb|RenewDocumentCommand|.
+This command is used to typeset the definition symbol separate a nonterminal from its productions. It defaults to \SimpleBNFDefEq. It can be redefined using \verb|RenewDocumentCommand|.
 
 \begin{presentcommand}
   \cmd{SimpleBNFDefOr}
 \end{presentcommand}
-This command is used to typeset the separator symbol between productions. It defaults to \SimpleBNFDefOr. It can be redefined to customized output using \verb|RenewDocumentCommand|.
+This command is used to typeset the separator symbol between productions. It defaults to \SimpleBNFDefOr. It can be redefined using \verb|RenewDocumentCommand|.
+
+\begin{presentcommand}
+  \cmd{SimpleBNFStretch}
+\end{presentcommand}
+This command is used to control the vertical spacing between consecutive rules.
+It defaults to 0.
+It can be redefined using \verb/Renewdocumentcommand/.
 
 \begin{presentcommand}
   \cmd{bnfexpr}

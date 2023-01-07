@@ -13,8 +13,8 @@
 \RequirePackage{mathtools}
 \ProvidesExplPackage
   {simplebnf}
-  {2022/05/08}
-  {0.3.1}
+  {2023/01/07}
+  {0.3.2}
   {A simple package to format Backus–Naur form}
 
 \cs_generate_variant:Nn \regex_split:nnNTF {nVNTF}
@@ -23,6 +23,8 @@
 \NewDocumentCommand\SimpleBNFDefEq{}{\ensuremath{\Coloneqq}}
 
 \NewDocumentCommand\SimpleBNFDefOr{}{\ensuremath{|}}
+
+\NewDocumentCommand\SimpleBNFStretch{}{0em}
 
 \seq_new:N \l__input_seq
 \seq_new:N \l__term_seq
@@ -143,7 +145,7 @@
             \bool_set_false:N \l_tmp_first_term
           }
           {
-            \tl_put_right:Nn \l__table_tl { \\ }
+            \tl_put_right:Nn \l__table_tl { \\[\SimpleBNFStretch] }
           }
 
         \regex_split:nnNTF { ::= } { ##1 } \l__term_seq
@@ -197,7 +199,7 @@
 
 %% The MIT License (MIT)
 %%
-%% Copyright © 2019-2022 Jay Lee <jaeho.lee@snu.ac.kr>
+%% Copyright © 2019-2023 Jay Lee <jaeho.lee@snu.ac.kr>
 %%
 %% Permission is hereby granted, free of charge, to any person obtaining
 %% a copy of this software and associated documentation files (the "Software"),
