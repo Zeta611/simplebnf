@@ -32,10 +32,10 @@
 
 \title{%
   \textsf{simplebnf} --- A simple package to format Backus-Naur form%
-  \footnote{This file describes v0.3.2.}}
+  \footnote{This file describes v0.3.3.}}
 \author{Jay Lee\footnote{E-mail: %
   \href{mailto:jaeho.lee@snu.ac.kr}{\texttt{jaeho.lee@snu.ac.kr}}}}
-\date{2023/01/07}
+\date{2023/01/31}
 
 \begin{document}
 \maketitle
@@ -86,7 +86,7 @@ where each of the \textit{rhs} represents alternative syntactic forms of the \te
 A sample code and the result is shown below:
 \begin{exampleside}
   \begin{bnfgrammar}
-    a \in \textit{Vars}
+    a \in \textit{Vars} : variables
     ;;
     expr ::=
       expr + term : sum

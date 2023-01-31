@@ -14,7 +14,7 @@
 \ProvidesExplPackage
   {simplebnf}
   {2023/01/07}
-  {0.3.2}
+  {0.3.3}
   {A simple package to format Backus–Naur form}
 
 \cs_generate_variant:Nn \regex_split:nnNTF {nVNTF}
@@ -169,23 +169,25 @@
             \seq_map_function:NN \l__keypairs_seq \simplebnf_typeset_rhs:n
           }
           {
-            % Else, parse a \in declaration
+            % Else, parse a \in declaration (TODO: There is a huge room for generalization)
             \regex_split:nnNTF { \c{in} } { ##1 } \l__term_seq
               {
-                %% \l__term_seq - (lhs, rhs)
-                \seq_pop_left:NN \l__term_seq \l_tmpa_tl
+                %% \l__term_seq    - (lhs, rhses)...
+                %% \l__term_tl     - lhs
+                %% \l__keypairs_tl - rhses
+                \seq_pop_left:NN \l__term_seq \l__term_tl
+                \seq_pop_left:NN \l__term_seq \l__keypairs_tl
 
-                \simplebnf_typeset_lhs:n{\l_tmpa_tl}
+                \simplebnf_typeset_lhs:n{\l__term_tl}
                 \tl_put_right:Nn \l__table_tl
                   {
-                    & $\in$ & $
+                    & $\in$ &
                   }
-                \seq_pop_left:NN \l__term_seq \l_tmpa_tl
-                \tl_put_right:NV \l__table_tl \l_tmpa_tl
-                \tl_put_right:Nn \l__table_tl
-                  {
-                    $ &
-                  }
+                %% \l__keypairs_seq - (rhs:annot | rhs)...
+                \regex_split:NVN \g_simplebnf_rhs_newline_r \l__keypairs_tl \l__keypairs_seq
+
+                \bool_set_true:N \l__first_rhs
+                \seq_map_function:NN \l__keypairs_seq \simplebnf_typeset_rhs:n
               }
               { \msg_error:nn {simplebnf} { Could not parser ##1 } }
           }
