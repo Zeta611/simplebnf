@@ -1,5 +1,7 @@
 \documentclass[a4paper]{article}
 
+\usepackage{stmaryrd}
+
 \usepackage{simplebnf}
 \usepackage{hyperref}
 
@@ -32,15 +34,87 @@
 
 \title{%
   \textsf{simplebnf} --- A simple package to format Backus-Naur form%
-  \footnote{This file describes v0.3.3.}}
+  \footnote{This file describes v1.0.0.}}
 \author{Jay Lee\footnote{E-mail: %
   \href{mailto:jaeho.lee@snu.ac.kr}{\texttt{jaeho.lee@snu.ac.kr}}}}
-\date{2023/01/31}
+\date{2023/11/23}
 
 \begin{document}
 \maketitle
 
-This package provides a simple way to typeset grammars written in Backus-Naur form (BNF).
+
+\vfill
+This package provides a simple way for typesetting grammars in Backus-Naur form (BNF).
+It features a flexible configuration system, allowing for the customization of the domain-specific language (DSL) used in typesetting the grammar.
+Additionally, the package comes with sensible defaults.
+
+Below is the metagrammar of the DSL as defined in this package, which is typeset using the package itself.
+\begin{tcolorbox}[breakable]
+  \begin{bnf}(
+    prod-delim = ;;;,
+    new-line-delim = !,
+    single-line-delim = ?,
+    comment = //,
+    relation = {:::=|:in:},
+    relation-sym-map =
+      {
+        {:::=} = $\Coloneqq$,
+        {:in:} = $\in$,
+      },
+  )[
+    colspec = lrcll,
+    column{2} = {mode=dmath},
+    column{4} = {mode=text, font=\ttfamily},
+  ]
+    G // Gramar :in:
+      $P$ // production
+    ! $P \fatsemi {}$ // production w/ a trailing delimiter
+    ! $P \fatsemi G$ // production sequence
+  ;;;
+    P // Production :::= $L \rightarrowtriangle R$
+  ;;;
+    L // LHS :::=
+      $v$ // metavariable
+    ! $v\!\fatslash\,c$ // annotated metavariable
+  ;;;
+    R // RHS :::=
+      $\talloblong$ // delimiter
+    ! $A \talloblong R$ // alternative sequence
+  ;;;
+    A // Alternative :::=
+      $f$ // syntactic form
+    ! $f\!\fatslash\,c$ // annotated syntactic form
+  ;;;
+    \fatsemi // Prod. delimiter :::=
+      ;; // default symbol
+    ! $\cdots$ // user-defined
+  ;;;
+    \rightarrowtriangle // Rule relation :::=
+    %  ::= ? -> ? \texttt{\char`\\in} %// default symbols
+      ::= // $\Coloneqq$
+    ! -> // $\to$
+    ! \texttt{\char`\\in} // $\in$
+    ! $\cdots$ // user-defined
+  ;;;
+    \fatslash // Annot. symbol :::=
+      : // default symbol
+    ! $\cdots$ // user-defined
+  ;;;
+    \talloblong // Alt. delimiter :::=
+      | // new-line delimiter
+    ! || // single-line delimiter
+    ! $\cdots$ // user-defined
+  ;;;
+  % TODO: remove empty comment
+    v, f, c :in: \textsf{\TeX{} tl} // valid \TeX{} token lists
+  ;;;
+  \end{bnf}
+\end{tcolorbox}
+\vfill
+
+\section{For the impatient}
+TBD
+% single-line-delim must be more specific than new-line-delim
 
 \begin{presentcommand}
   \cmd{SimpleBNFDefEq}

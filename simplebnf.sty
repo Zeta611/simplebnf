@@ -9,132 +9,454 @@
 %% ---------------------------------------------------------------------------
 %%
 \RequirePackage{expl3,xparse}
+% The new backend is tabularray
+\RequirePackage{tabularray}
 % mathtools is needed for the \Coloneqq symbol
 \RequirePackage{mathtools}
+
 \ProvidesExplPackage
   {simplebnf}
-  {2023/01/31}
-  {0.3.3}
+  {2023/11/22}
+  {1.0.0}
   {A simple package to format Backus–Naur form}
 
-\cs_generate_variant:Nn \regex_split:nnNTF {nVNTF}
+
+\tl_new:N \l__simplebnf_prod_delim_tl
+\tl_new:N \l__simplebnf_new_line_delim_tl
+\tl_new:N \l__simplebnf_single_line_delim_tl
+\tl_new:N \l__simplebnf_comment_tl
+\tl_new:N \l__simplebnf_or_sym_tl
+\tl_new:N \l__simplebnf_relation_tl
+\dim_new:N \l__simplebnf_prod_sep_dim
+\dim_new:N \l__simplebnf_row_sep_dim
+\prop_new:N \l__simplebnf_relation_sym_map_prop
+
+\keys_define:nn { simplebnf }
+  {
+    prod-delim .tl_set:N = \l__simplebnf_prod_delim_tl,
+    new-line-delim .tl_set:N = \l__simplebnf_new_line_delim_tl,
+    single-line-delim .tl_set:N = \l__simplebnf_single_line_delim_tl,
+    comment .tl_set:N = \l__simplebnf_comment_tl,
+    relation .tl_set:N = \l__simplebnf_relation_tl,
+    relation-sym-map .code:n =
+      { \prop_set_from_keyval:Nn \l__simplebnf_relation_sym_map_prop { #1 } },
+    or-sym .tl_set:N = \l__simplebnf_or_sym_tl,
+    prod-sep .dim_set:N = \l__simplebnf_prod_sep_dim,
+    row-sep .dim_set:N = \l__simplebnf_row_sep_dim,
+  }
+
+% default key-values
+\keys_set:nn { simplebnf }
+  {
+    prod-delim = ;;,
+    new-line-delim = \|,
+    single-line-delim = //,
+    comment = :,
+    relation = {::=|->|:in:},
+    relation-sym-map =
+      {
+        {::=} = {\ensuremath{\Coloneqq}},
+        {->} = {\ensuremath{\to}},
+        {:in:} = {\ensuremath{\in}},
+      },
+    or-sym = $|$,
+    prod-sep = 2pt,
+    row-sep = 0pt,
+  }
+
+
+% bnf environment is internally a tabularray environment
+\NewTblrEnviron{@simplebnf_tblr_env}
+\SetTblrInner[@simplebnf_tblr_env]{rowsep=\l__simplebnf_row_sep_dim}
+
+
+% The main token list that stores the table.
+\tl_new:N \l__simplebnf_table_tl
+
+\seq_new:N \l__simplebnf_lhs_rhs_pair_seq
+\tl_new:N \l__simplebnf_lhs_tl
+\tl_new:N \l__simplebnf_matched_relation_tl
+\tl_new:N \l__simplebnf_rhs_tl
+
+\seq_new:N \l__simplebnf_alternative_seq
+\bool_new:N \l__simplebnf_first_alternative_bool
+
+\regex_new:N \l__simplebnf_new_line_delim_regex
+\regex_new:N \l__simplebnf_single_line_delim_regex
+\regex_new:N \l__simplebnf_comment_regex
+\regex_new:N \l__simplebnf_prod_delim_regex
+\regex_new:N \l__simplebnf_relation_regex
+
+\cs_generate_variant:Nn \regex_split:NnNTF {NVNTF}
 \cs_generate_variant:Nn \regex_split:NnN {NVN}
+\cs_generate_variant:Nn \regex_set:Nn {NV}
+\cs_generate_variant:Nn \regex_replace_all:NnN {NVN}
 
-\NewDocumentCommand\SimpleBNFDefEq{}{\ensuremath{\Coloneqq}}
-
-\NewDocumentCommand\SimpleBNFDefOr{}{\ensuremath{|}}
-
-\NewDocumentCommand\SimpleBNFStretch{}{0em}
-
-\seq_new:N \l__input_seq
-\seq_new:N \l__term_seq
-\tl_new:N \l__term_tl
-\tl_new:N \l__keypairs_tl
-\tl_new:N \l__table_tl
-\seq_new:N \l__keypairs_seq
-\bool_new:N \l__first_rhs
-
-\regex_new:N \g_simplebnf_rhs_newline_r
-\regex_new:N \g_simplebnf_rhs_nb_r
-
-%% Typeset a single rhs of a production.
-%% \l__first_rhs = true  => `::=' already typeset
-%% \l__first_rhs = false => move to a newline and typeset `|'
-%% #1 - rhs : annot or rhs
-\cs_new:Nn \simplebnf_typeset_rhs:n
-{
-  \bool_if:NTF \l__first_rhs
-    {
-      \bool_set_false:N \l__first_rhs
-    }
-    {
-      \tl_put_right:Nn \l__table_tl { \\ && \SimpleBNFDefOr & }
-    }
-
-  \tl_set:Nn \l_tmpa_tl { #1 }
-  \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
-  \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
-  \regex_split:nVNTF { : } \l_tmpa_tl \l_tmpa_seq
-    {
-      \seq_pop_left:NNT \l_tmpa_seq \l_tmpa_tl
-        {
-          \regex_replace_all:NnN \g_simplebnf_rhs_nb_r { \c{SimpleBNFDefOr} } \l_tmpa_tl
-          % Expand only the local temporary variable.
-          \tl_put_right:No \l__table_tl
-             {
-               \exp_after:wN\bnfexpr\exp_after:wN{\l_tmpa_tl} &
-             }
-        }
-
-      \seq_pop_left:NNT \l_tmpa_seq \l_tmpb_tl
-        {
-          \regex_replace_once:nnN { ^\s+ } {} \l_tmpb_tl
-          \tl_put_right:No \l__table_tl
-            {
-              \exp_after:wN\bnfannot\exp_after:wN{\l_tmpb_tl}
-            }
-        }
-    }
-    {
-      \regex_replace_all:NnN \g_simplebnf_rhs_nb_r { \c{SimpleBNFDefOr} } \l_tmpa_tl
-
-      \tl_put_right:No \l__table_tl
-         {
-           \exp_after:wN\bnfexpr\exp_after:wN{\l_tmpa_tl}
-         }
-    }
-}
 
 %% Typeset a single lhs of a production.
 %% #1 - lhs : either term or (term : annotation)
-\cs_new:Nn \simplebnf_typeset_lhs:n
-{
-  \tl_set:Nx \l_tmpa_tl { #1 }
-  \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
-  \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
+\cs_new:Nn \__simplebnf_typeset_lhs:n
+  {
+    \tl_set:Nx \l_tmpa_tl { #1 }
+    \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
+    \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
 
-  \regex_split:nVNTF { : } \l_tmpa_tl \l_tmpa_seq
-    {
-      \seq_pop_right:NN \l_tmpa_seq \l_tmpa_tl
-      \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
-      \tl_put_right:No \l__table_tl
-        {
-          \exp_after:wN\bnfannot\exp_after:wN{\l_tmpa_tl} &
-        }
-      \seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
-      \tl_put_right:No \l__table_tl
-        {
-          \exp_after:wN\bnfexpr\exp_after:wN{\l_tmpa_tl}
-        }
-    }
-    {
-      \tl_put_right:No \l__table_tl
-        {
-          \exp_after:wN&\exp_after:wN\bnfexpr\exp_after:wN{\l_tmpa_tl}
-        }
-    }
-}
+    \regex_split:NVNTF \l__simplebnf_comment_regex \l_tmpa_tl \l_tmpa_seq
+      { % annotation
+        \seq_pop_right:NN \l_tmpa_seq \l_tmpa_tl
+        \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
+        \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
+        \tl_put_right:Nn \l__simplebnf_table_tl { & }
+        % metavariable
+        \seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
+        \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
+      }
+      { % not annotated
+        \tl_put_right:Nn \l__simplebnf_table_tl { & }
+        \seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
+        \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
+      }
 
-\NewDocumentCommand \bnfexpr { m } { \texttt { #1 } }
-\NewDocumentCommand \bnfannot { m } { \textit{ #1 } }
+    % There should be no more tokens in the sequence.
+    \seq_if_empty:NF \l_tmpa_seq
+      { \msg_error:nn { simplebnf } { Left-hand~side~is~malformed:~#1 } }
+  }
+
+
+% Handle a single alternative (or single-line alternatives) of an RHS.
+\cs_new:Nn \__simplebnf_typeset_rhs:n
+  {
+    \bool_if:NTF \l__simplebnf_first_alternative_bool
+      { \bool_set_false:N \l__simplebnf_first_alternative_bool }
+      {
+        \tl_put_right:Nn \l__simplebnf_table_tl
+          { \\ & & \l__simplebnf_or_sym_tl & }
+      }
+
+    \tl_set:Nn \l_tmpa_tl { #1 }
+    \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
+    \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
+
+    \regex_replace_all:NVN
+      \l__simplebnf_single_line_delim_regex
+      \l__simplebnf_or_sym_tl
+      \l_tmpa_tl
+
+    \regex_split:NVNTF \l__simplebnf_comment_regex \l_tmpa_tl \l_tmpa_seq
+      { % put an alternate syntax form
+        \seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
+        \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
+        \tl_put_right:Nn \l__simplebnf_table_tl { & }
+
+        % put an annotation
+        \seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
+        \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
+        \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
+
+        % There should be no more tokens in the sequence.
+        \seq_if_empty:NF \l_tmpa_seq
+          { \msg_error:nn { simplebnf } { Alternative~is~malformed:~#1 } }
+      }
+      { % no annotation
+        \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
+      }
+  }
+
+
+
+% Handle a single alternative of an RHS.
+\cs_new:Nn \__simplebnf_typeset_rhs_bak:n
+  {
+    \bool_if:NTF \l__simplebnf_first_alternative_bool
+      { \bool_set_false:N \l__simplebnf_first_alternative_bool }
+      {
+        \tl_put_right:Nn \l__simplebnf_table_tl
+          { \\ & & \l__simplebnf_or_sym_tl & }
+      }
+
+    \tl_set:Nn \l_tmpa_tl { #1 }
+    \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
+    \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
+
+    \regex_split:NVNTF \l__simplebnf_comment_regex \l_tmpa_tl \l_tmpa_seq
+      {
+        \seq_pop_left:NNT \l_tmpa_seq \l_tmpa_tl
+          {
+            \regex_replace_all:NnN
+              \l__simplebnf_single_line_delim_regex
+              { \l__or_sym_tl }
+              \l_tmpa_tl
+
+            % put an alternate syntax form
+            \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
+            \tl_put_right:Nn \l__simplebnf_table_tl { & }
+          }
+
+        \seq_pop_left:NNT \l_tmpa_seq \l_tmpb_tl
+          {
+            \regex_replace_once:nnN { ^\s+ } {} \l_tmpb_tl
+            \tl_put_right:NV \l__simplebnf_table_tl \l_tmpb_tl
+          }
+      }
+      {
+        \regex_replace_all:NnN
+          \l__simplebnf_single_line_delim_regex
+          { \c{SimpleBNFDefOr} }
+          \l_tmpa_tl
+
+        \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
+      }
+  }
+
+
+% Handle a single production P
+\cs_new:Nn \__simplebnf_typeset_production:n
+  {
+    \regex_split:NnNTF
+      \l__simplebnf_relation_regex
+      { #1 }
+      \l__simplebnf_lhs_rhs_pair_seq
+      {
+        % LHS
+        \seq_pop_left:NN \l__simplebnf_lhs_rhs_pair_seq \l__simplebnf_lhs_tl
+        % Rule relation
+        \seq_pop_left:NN \l__simplebnf_lhs_rhs_pair_seq \l__simplebnf_matched_relation_tl
+        % RHS
+        \seq_pop_left:NN \l__simplebnf_lhs_rhs_pair_seq \l__simplebnf_rhs_tl
+
+        \seq_if_empty:NF \l__simplebnf_lhs_rhs_pair_seq
+          { \msg_error:nn { simplebnf } { Malformed~production:~#1 } }
+
+        % Build the LHS
+        \__simplebnf_typeset_lhs:n \l__simplebnf_lhs_tl
+
+        % Build the rule relation
+        \prop_get:NVNTF
+          \l__simplebnf_relation_sym_map_prop
+          \l__simplebnf_matched_relation_tl
+          \l_tmpa_tl
+          {
+            \tl_put_right:Nn \l__simplebnf_table_tl { & }
+            \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
+            \tl_put_right:Nn \l__simplebnf_table_tl { & }
+          }
+          {
+            \msg_error:nn { simplebnf } { Unknown~rule~relation:~#1 }
+            \tl_put_right:Nn \l__simplebnf_table_tl { & & }
+          }
+        % Build the RHS
+        %% \l__simplebnf_alternative_seq - (rhs:annot | rhs)...
+        \regex_split:NVN
+          \l__simplebnf_new_line_delim_regex
+          \l__simplebnf_rhs_tl
+          \l__simplebnf_alternative_seq
+
+        \bool_set_true:N \l__simplebnf_first_alternative_bool
+        \seq_map_function:NN \l__simplebnf_alternative_seq \__simplebnf_typeset_rhs:n
+      }
+      { \msg_error:nn {simplebnf} { No~rule~relation~found:~#1 } }
+  }
+
+
+% The main control sequence that builds the grammar G into \l__simplebnf_table_tl
+\cs_new:Nn \__simplebnf_build_grammar:n
+  {
+    \regex_set:NV \l__simplebnf_new_line_delim_regex \l__simplebnf_new_line_delim_tl
+    \regex_set:NV \l__simplebnf_single_line_delim_regex \l__simplebnf_single_line_delim_tl
+    \regex_set:NV \l__simplebnf_comment_regex \l__simplebnf_comment_tl
+    \regex_set:NV \l__simplebnf_prod_delim_regex \l__simplebnf_prod_delim_tl
+    \tl_put_left:Nn \l__simplebnf_relation_tl { ( }
+    \tl_put_right:Nn \l__simplebnf_relation_tl { ) }
+    \regex_set:NV \l__simplebnf_relation_regex \l__simplebnf_relation_tl
+
+    % \l_tmpa_seq contains the sequence of productions (P; ...).
+    \regex_split:NnN \l__simplebnf_prod_delim_regex { #1 } \l_tmpa_seq
+
+    % Is this the first production of this grammar?
+    \bool_set_true:N \l_tmpa_bool
+    \seq_map_inline:Nn \l_tmpa_seq
+      {
+        \tl_if_blank:nF { ##1 } % ignore empty productions
+          { % If not first, change row
+            \bool_if:NTF \l_tmpa_bool
+              { \bool_set_false:N \l_tmpa_bool }
+              {
+                \tl_put_right:Nn \l__simplebnf_table_tl { \\[\l__simplebnf_prod_sep_dim] }
+              }
+            \__simplebnf_typeset_production:n { ##1 }
+          }
+      }
+  }
+
 
 %% Typeset a BNF grammar.
-%% #1 - tabular specification (llcll)
-%% #2 - regexp for newline separator for rhses
-%% #2 - regexp for non-breaking separator for rhses
-%% #3 - grammar
-\NewDocumentEnvironment { bnfgrammar } { O{llcll} O{[^\|]\|[^\|]} O{\|\|} +b }
+%% #1 - key-value options for simplebnf
+%% #2 - tabularray specification (default: llcll)
+%% #3 - grammar body
+\NewDocumentEnvironment { bnf } { d() O{llcll} +b }
   {
-    \regex_gset:Nn \g_simplebnf_rhs_newline_r { #2 }
-    \regex_gset:Nn \g_simplebnf_rhs_nb_r { #3 }
+    \IfNoValueF { #1 }
+      { \keys_set:nn { simplebnf } { #1 } }
+
+    \__simplebnf_build_grammar:n { #3 }
+
+    \begin{@simplebnf_tblr_env}[expand=\l__simplebnf_table_tl]{#2}
+      \tl_use:N \l__simplebnf_table_tl
+    \end{@simplebnf_tblr_env}
+  }
+  { }
+
+
+\NewDocumentCommand \SetBNFInner { m }
+  {
+    \SetTblrInner[@simplebnf_tblr_env]{#1}
+  }
+
+
+% DEPRECATED APIs
+
+% Redefinable user-level variables
+\newcommand*\SimpleBNFDefEq{\ensuremath{\Coloneqq}}
+\newcommand*\SimpleBNFDefOr{\ensuremath{|}}
+\newcommand*\SimpleBNFStretch{0em}
+
+\cs_generate_variant:Nn \regex_split:nnNTF {nVNTF}
+
+%% Typeset a single lhs of a production.
+%% #1 - lhs : either term or (term : annotation)
+\cs_new:Nn \@dep__simplebnf_typeset_lhs:n
+  {
+    \tl_set:Nx \l_tmpa_tl { #1 }
+    \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
+    \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
+
+    \regex_split:nVNTF { : } \l_tmpa_tl \l_tmpa_seq
+      {
+        \seq_pop_right:NN \l_tmpa_seq \l_tmpa_tl
+        \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
+        \tl_put_right:No \l__simplebnf_table_tl
+          {
+            \exp_after:wN\bnfannot\exp_after:wN{\l_tmpa_tl} &
+          }
+        \seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
+        \tl_put_right:No \l__simplebnf_table_tl
+          {
+            \exp_after:wN\bnfexpr\exp_after:wN{\l_tmpa_tl}
+          }
+      }
+      {
+        \tl_put_right:No \l__simplebnf_table_tl
+          {
+            \exp_after:wN&\exp_after:wN\bnfexpr\exp_after:wN{\l_tmpa_tl}
+          }
+      }
+  }
+
+
+%% Typeset a single rhs of a production.
+%% \l__simplebnf_first_alternative_bool = true  => `::=' already typeset
+%% \l__simplebnf_first_alternative_bool = false => move to a newline and typeset `|'
+%% #1 - rhs : annot or rhs
+\cs_new:Nn \@dep__simplebnf_typeset_rhs:n
+  {
+    \bool_if:NTF \l__simplebnf_first_alternative_bool
+      {
+        \bool_set_false:N \l__simplebnf_first_alternative_bool
+      }
+      {
+        \tl_put_right:Nn \l__simplebnf_table_tl { \\ && \SimpleBNFDefOr & }
+      }
+
+    \tl_set:Nn \l_tmpa_tl { #1 }
+    \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
+    \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
+    \regex_split:nVNTF { : } \l_tmpa_tl \l_tmpa_seq
+      {
+        \seq_pop_left:NNT \l_tmpa_seq \l_tmpa_tl
+          {
+            \regex_replace_all:NnN \l__simplebnf_single_line_delim_regex { \c{SimpleBNFDefOr} } \l_tmpa_tl
+            % Expand only the local temporary variable.
+            \tl_put_right:No \l__simplebnf_table_tl
+              {
+                \exp_after:wN\bnfexpr\exp_after:wN{\l_tmpa_tl} &
+              }
+          }
+
+        \seq_pop_left:NNT \l_tmpa_seq \l_tmpb_tl
+          {
+            \regex_replace_once:nnN { ^\s+ } {} \l_tmpb_tl
+            \tl_put_right:No \l__simplebnf_table_tl
+              {
+                \exp_after:wN\bnfannot\exp_after:wN{\l_tmpb_tl}
+              }
+          }
+      }
+      {
+        \regex_replace_all:NnN \l__simplebnf_single_line_delim_regex { \c{SimpleBNFDefOr} } \l_tmpa_tl
+
+        \tl_put_right:No \l__simplebnf_table_tl
+          {
+            \exp_after:wN\bnfexpr\exp_after:wN{\l_tmpa_tl}
+          }
+      }
+  }
+
+\cs_new:Nn \@dep__simplebnf_typeset_production:n
+  {
+    \regex_split:nnNTF { ::= } { #1 } \l__simplebnf_lhs_rhs_pair_seq
+      % Parse a ::= definition
+      {
+        %% \l__simplebnf_lhs_rhs_pair_seq    - (lhs, rhses)...
+        %% \l__simplebnf_lhs_tl     - lhs
+        %% \l__simplebnf_rhs_tl - rhses
+        \seq_pop_left:NN \l__simplebnf_lhs_rhs_pair_seq \l__simplebnf_lhs_tl
+        \seq_pop_left:NN \l__simplebnf_lhs_rhs_pair_seq \l__simplebnf_rhs_tl
+
+        \@dep__simplebnf_typeset_lhs:n{\l__simplebnf_lhs_tl}
+        \tl_put_right:Nn \l__simplebnf_table_tl
+          {
+            & \SimpleBNFDefEq &
+          }
+        %% \l__simplebnf_alternative_seq - (rhs:annot | rhs)...
+        \regex_split:NVN \l__simplebnf_new_line_delim_regex \l__simplebnf_rhs_tl \l__simplebnf_alternative_seq
+
+        \bool_set_true:N \l__simplebnf_first_alternative_bool
+        \seq_map_function:NN \l__simplebnf_alternative_seq \@dep__simplebnf_typeset_rhs:n
+      }
+      {
+        % Else, parse a \in declaration (TODO: There is a huge room for generalization)
+        \regex_split:nnNTF { \c{in} } { #1 } \l__simplebnf_lhs_rhs_pair_seq
+          {
+            %% \l__simplebnf_lhs_rhs_pair_seq    - (lhs, rhses)...
+            %% \l__simplebnf_lhs_tl     - lhs
+            %% \l__simplebnf_rhs_tl - rhses
+            \seq_pop_left:NN \l__simplebnf_lhs_rhs_pair_seq \l__simplebnf_lhs_tl
+            \seq_pop_left:NN \l__simplebnf_lhs_rhs_pair_seq \l__simplebnf_rhs_tl
+
+            \@dep__simplebnf_typeset_lhs:n{\l__simplebnf_lhs_tl}
+            \tl_put_right:Nn \l__simplebnf_table_tl
+              {
+                & $\in$ &
+              }
+            %% \l__simplebnf_alternative_seq - (rhs:annot | rhs)...
+            \regex_split:NVN \l__simplebnf_new_line_delim_regex \l__simplebnf_rhs_tl \l__simplebnf_alternative_seq
+
+            \bool_set_true:N \l__simplebnf_first_alternative_bool
+            \seq_map_function:NN \l__simplebnf_alternative_seq \@dep__simplebnf_typeset_rhs:n
+          }
+          { \msg_error:nn {simplebnf} { Could~not~parse~#1 } }
+      }
+  }
+
+
+\seq_new:N \l__input_seq
+\cs_new:Nn \@dep__simplebnf_typeset_grammar:nnn
+  {
+    \regex_set:Nn \l__simplebnf_new_line_delim_regex { #1 }
+    \regex_set:Nn \l__simplebnf_single_line_delim_regex { #2 }
 
     %% \l__input_seq is a list of term definitions.
-    \regex_split:nnN { ;; } { #4 } \l__input_seq
-    \begin{center}
-      \tl_set:Nn \l__table_tl
-        {
-          \begin{tabular}{#1}
-        }
+    \regex_split:nnN { ;; } { #3 } \l__input_seq
 
     \bool_set_true:N \l_tmp_first_term % Is this the first term in this grammar?
     \seq_map_inline:Nn \l__input_seq
@@ -145,56 +467,30 @@
             \bool_set_false:N \l_tmp_first_term
           }
           {
-            \tl_put_right:Nn \l__table_tl { \\[\SimpleBNFStretch] }
+            \tl_put_right:Nn \l__simplebnf_table_tl { \\[\SimpleBNFStretch] }
           }
 
-        \regex_split:nnNTF { ::= } { ##1 } \l__term_seq
-          % Parse a ::= definition
-          {
-            %% \l__term_seq    - (lhs, rhses)...
-            %% \l__term_tl     - lhs
-            %% \l__keypairs_tl - rhses
-            \seq_pop_left:NN \l__term_seq \l__term_tl
-            \seq_pop_left:NN \l__term_seq \l__keypairs_tl
-
-            \simplebnf_typeset_lhs:n{\l__term_tl}
-            \tl_put_right:Nn \l__table_tl
-              {
-                & \SimpleBNFDefEq &
-              }
-            %% \l__keypairs_seq - (rhs:annot | rhs)...
-            \regex_split:NVN \g_simplebnf_rhs_newline_r \l__keypairs_tl \l__keypairs_seq
-
-            \bool_set_true:N \l__first_rhs
-            \seq_map_function:NN \l__keypairs_seq \simplebnf_typeset_rhs:n
-          }
-          {
-            % Else, parse a \in declaration (TODO: There is a huge room for generalization)
-            \regex_split:nnNTF { \c{in} } { ##1 } \l__term_seq
-              {
-                %% \l__term_seq    - (lhs, rhses)...
-                %% \l__term_tl     - lhs
-                %% \l__keypairs_tl - rhses
-                \seq_pop_left:NN \l__term_seq \l__term_tl
-                \seq_pop_left:NN \l__term_seq \l__keypairs_tl
-
-                \simplebnf_typeset_lhs:n{\l__term_tl}
-                \tl_put_right:Nn \l__table_tl
-                  {
-                    & $\in$ &
-                  }
-                %% \l__keypairs_seq - (rhs:annot | rhs)...
-                \regex_split:NVN \g_simplebnf_rhs_newline_r \l__keypairs_tl \l__keypairs_seq
-
-                \bool_set_true:N \l__first_rhs
-                \seq_map_function:NN \l__keypairs_seq \simplebnf_typeset_rhs:n
-              }
-              { \msg_error:nn {simplebnf} { Could not parser ##1 } }
-          }
+        \@dep__simplebnf_typeset_production:n { ##1 }
       }
+  }
 
-    \tl_put_right:Nn \l__table_tl { \end{tabular} }
-    \tl_use:N \l__table_tl
+
+\NewDocumentCommand \bnfexpr { m } { \texttt { #1 } }
+\NewDocumentCommand \bnfannot { m } { \textit { #1 } }
+
+
+%% Typeset a BNF grammar.
+%% #1 - tabular specification (llcll)
+%% #2 - regexp for newline separator for rhses
+%% #2 - regexp for non-breaking separator for rhses
+%% #3 - grammar
+\NewDocumentEnvironment { bnfgrammar } { O{llcll} O{[^\|]\|[^\|]} O{\|\|} +b }
+  {
+    \begin{center}
+      \begin{tabular}{#1}
+        \@dep__simplebnf_typeset_grammar:nnn { #2 } { #3 } { #4 }
+        \tl_use:N \l__simplebnf_table_tl
+      \end{tabular}
     \end{center}
   }
   { }
