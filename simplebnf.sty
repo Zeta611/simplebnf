@@ -139,85 +139,42 @@
 % Handle a single alternative (or single-line alternatives) of an RHS.
 \cs_new:Nn \__simplebnf_typeset_rhs:n
   {
-    \bool_if:NTF \l__simplebnf_first_alternative_bool
-      { \bool_set_false:N \l__simplebnf_first_alternative_bool }
+    \tl_if_blank:nF { #1 }
       {
-        \tl_put_right:Nn \l__simplebnf_table_tl
-          { \\ & & \l__simplebnf_or_sym_tl & }
-      }
+        \bool_if:NTF \l__simplebnf_first_alternative_bool
+          { \bool_set_false:N \l__simplebnf_first_alternative_bool }
+          {
+            \tl_put_right:Nn \l__simplebnf_table_tl
+              { \\ & & \l__simplebnf_or_sym_tl & }
+          }
 
-    \tl_set:Nn \l_tmpa_tl { #1 }
-    \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
-    \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
-
-    \regex_replace_all:NVN
-      \l__simplebnf_single_line_delim_regex
-      \l__simplebnf_or_sym_tl
-      \l_tmpa_tl
-
-    \regex_split:NVNTF \l__simplebnf_comment_regex \l_tmpa_tl \l_tmpa_seq
-      { % put an alternate syntax form
-        \seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
-        \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
-        \tl_put_right:Nn \l__simplebnf_table_tl { & }
-
-        % put an annotation
-        \seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
+        \tl_set:Nn \l_tmpa_tl { #1 }
         \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
-        \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
+        \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
 
-        % There should be no more tokens in the sequence.
-        \seq_if_empty:NF \l_tmpa_seq
-          { \msg_error:nnn { simplebnf } { alt } { #1 } }
-      }
-      { % no annotation
-        \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
-      }
-  }
-
-
-
-% Handle a single alternative of an RHS.
-\cs_new:Nn \__simplebnf_typeset_rhs_bak:n
-  {
-    \bool_if:NTF \l__simplebnf_first_alternative_bool
-      { \bool_set_false:N \l__simplebnf_first_alternative_bool }
-      {
-        \tl_put_right:Nn \l__simplebnf_table_tl
-          { \\ & & \l__simplebnf_or_sym_tl & }
-      }
-
-    \tl_set:Nn \l_tmpa_tl { #1 }
-    \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
-    \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
-
-    \regex_split:NVNTF \l__simplebnf_comment_regex \l_tmpa_tl \l_tmpa_seq
-      {
-        \seq_pop_left:NNT \l_tmpa_seq \l_tmpa_tl
-          {
-            \regex_replace_all:NnN
-              \l__simplebnf_single_line_delim_regex
-              { \l__or_sym_tl }
-              \l_tmpa_tl
-
-            % put an alternate syntax form
-            \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
-            \tl_put_right:Nn \l__simplebnf_table_tl { & }
-          }
-
-        \seq_pop_left:NNT \l_tmpa_seq \l_tmpb_tl
-          {
-            \regex_replace_once:nnN { ^\s+ } {} \l_tmpb_tl
-            \tl_put_right:NV \l__simplebnf_table_tl \l_tmpb_tl
-          }
-      }
-      {
-        \regex_replace_all:NnN
+        \regex_replace_all:NVN
           \l__simplebnf_single_line_delim_regex
-          { \c{SimpleBNFDefOr} }
+          \l__simplebnf_or_sym_tl
           \l_tmpa_tl
 
-        \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
+        \regex_split:NVNTF \l__simplebnf_comment_regex \l_tmpa_tl \l_tmpa_seq
+          { % put an alternate syntax form
+            \seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
+            \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
+            \tl_put_right:Nn \l__simplebnf_table_tl { & }
+
+            % put an annotation
+            \seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
+            \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
+            \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
+
+            % There should be no more tokens in the sequence.
+            \seq_if_empty:NF \l_tmpa_seq
+              { \msg_error:nnn { simplebnf } { alt } { #1 } }
+          }
+          { % no annotation
+            \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
+          }
       }
   }
 
