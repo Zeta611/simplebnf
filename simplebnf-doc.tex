@@ -1,4 +1,6 @@
-\documentclass[a4paper]{article}
+\documentclass[11pt]{article}
+\usepackage{geometry}
+\geometry{a4paper,top=1in,bottom=1in,left=1.2in,right=1.2in}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Font setup %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -28,6 +30,7 @@
       UprightFont = *-Regular,
       BoldFont = *-Bold,
       Scale=MatchLowercase,
+      AutoFakeSlant = 0.2,
     ]
   }
   {
@@ -52,8 +55,22 @@
 \tcbuselibrary{listings,breakable}
 \tcbset{listing engine=listings, colframe=black, colback=white, size=small}
 
+\NewTCBListing { example } { !O{} !s }
+  {
+    sharp corners,
+    IfBooleanTF = { #2 }
+      { listing above text }
+      { listing side text },
+    fontlower = \small,
+    #1
+  }
+
+\NewTCBListing { listing } { !O{} }
+  { sharp corners, listing only, #1 }
+
+
 \NewDocumentEnvironment {exampleside} {}
-  { \tcblisting{listing side text,righthand width=.55\textwidth} }
+  { \tcblisting{listing side text,righthand width=.5\textwidth} }
   { \endtcblisting }
 
 \NewDocumentEnvironment { presentcommand } { b }
@@ -76,6 +93,12 @@
   }
 
 
+\usepackage{tabularray}
+\UseTblrLibrary{booktabs}
+% \fakeverb
+\usepackage{codehigh}
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% simplebnf %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -86,6 +109,10 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Miscellaneous %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{hologo}
+\newcommand*{\XeLaTeX}{\hologo{XeLaTeX}}
+\newcommand*{\LuaLaTeX}{\hologo{LuaLaTeX}}
 
 % ``Make sure it comes *last* of your loaded packages"
 \usepackage{hyperref}
@@ -112,132 +139,288 @@ This package provides a simple way for typesetting grammars in Backus-Naur form 
 It features a flexible configuration system, allowing for the customization of the domain-specific language (DSL) used in typesetting the grammar.
 Additionally, the package comes with sensible defaults.
 
-Below is the metagrammar of the DSL as defined in this package, which is typeset using the package itself.
-\begin{tcolorbox}[breakable]
-  \begin{bnf}(
-    prod-delim = ;;;,
-    new-line-delim = !,
-    single-line-delim = ?,
-    comment = //,
-    relation = {:::=|:in:},
-    relation-sym-map =
-      {
-        {:::=} = $\Coloneqq$,
-        {:in:} = $\in$,
-      },
-  )[
-    colspec = lrcll,
-    column{2} = {mode=dmath},
-    column{4} = {mode=text, font=\ttfamily},
-  ]
-    G // Gramar :::=
-      $P$ // production
-    ! $P \fatsemi {}$ // production w/ a trailing delimiter
-    ! $P \fatsemi G$ // production sequence
-  ;;;
-    P // Production :::= $L \rightarrowtriangle R$
-  ;;;
-    L // LHS :::=
-      $v$ // metavariable
-    ! $v\!\fatslash\,c$ // annotated metavariable
-  ;;;
-    R // RHS :::=
-      $\talloblong$ // delimiter
-    ! $A \talloblong R$ // alternative sequence
-  ;;;
-    A // Alternative :::=
-      $f$ // syntactic form
-    ! $f\!\fatslash\,c$ // annotated syntactic form
-  ;;;
-    \fatsemi // Prod. delimiter :::=
-      ;; // default symbol
-    ! $\cdots$ // user-defined
-  ;;;
-    \rightarrowtriangle // Rule relation :::=
-    %  ::= ? -> ? \texttt{\char`\\in} %// default symbols
-      ::= // $\Coloneqq$
-    ! -> // $\to$
-    ! \texttt{\char`\\in} // $\in$
-    ! $\cdots$ // user-defined
-  ;;;
-    \fatslash // Annot. symbol :::=
-      : // default symbol
-    ! $\cdots$ // user-defined
-  ;;;
-    \talloblong // Alt. delimiter :::=
-      | // new-line delimiter
-    ! || // single-line delimiter
-    ! $\cdots$ // user-defined
-  ;;;
-  % TODO: remove empty comment
-    v, f, c :in: \textsf{\TeX{} tl} // valid \TeX{} token lists
-  ;;;
-  \end{bnf}
+Below is the metagrammar of the DSL as defined in this package, which is typeset using the package itself.\footnote{The code is shown in the appendix (section~\ref{sec:appendix}).}
+\begin{tcolorbox}[sharp corners]
+  \begin{center}
+    \begin{bnf}(
+      prod-delim = ;;;,
+      new-line-delim = !,
+      single-line-delim = ?,
+      comment = //,
+      relation = {:::=|:in:},
+      relation-sym-map =
+        {
+          {:::=} = $\Coloneqq$,
+          {:in:} = $\in$,
+        },
+    )[
+      colspec = lrcll,
+      column{2} = {mode=dmath},
+      column{4} = {mode=text, font=\ttfamily},
+    ]
+      G // Gramar :::=
+      ! $P$ // production
+      ! $P \fatsemi {}$ // production w/ a trailing delimiter
+      ! $P \fatsemi G$ // production sequence
+    ;;;
+      P // Production :::= $L \rightarrowtriangle R$
+    ;;;
+      L // LHS :::=
+      ! $v$ // metavariable
+      ! $v\!\fatslash\,c$ // annotated metavariable
+    ;;;
+      R // RHS :::=
+      ! $\talloblong$ // delimiter
+      ! $A \talloblong R$ // alternative sequence
+    ;;;
+      A // Alternative :::=
+      ! $f$ // syntactic form
+      ! $f\!\fatslash\,c$ // annotated syntactic form
+    ;;;
+      \fatsemi // Prod. delimiter :::=
+      ! ;; // default symbol
+      ! $\cdots$ // user-defined
+    ;;;
+      \rightarrowtriangle // Rule relation :::=
+      ! ::= // $\Coloneqq$
+      ! -> // $\to$
+      ! \texttt{\char`\\in} // $\in$
+      ! $\cdots$ // user-defined
+    ;;;
+      \fatslash // Annot. symbol :::=
+      ! : // default symbol
+      ! $\cdots$ // user-defined
+    ;;;
+      \talloblong // Alt. delimiter :::=
+      ! | // new-line delimiter
+      ! || // single-line delimiter
+      ! $\cdots$ // user-defined
+    ;;;
+      v, f, c :in: \textsf{\TeX{} tl} // valid \TeX{} token lists
+    ;;;
+    \end{bnf}
+  \end{center}
 \end{tcolorbox}
 \vfill
 
-\section{For the impatient}
-TBD
-% single-line-delim must be more specific than new-line-delim
-
-\begin{presentcommand}
-  \cmd{SimpleBNFDefEq}
-\end{presentcommand}
-This command is used to typeset the definition symbol separate a nonterminal from its productions. It defaults to \SimpleBNFDefEq. It can be redefined using \verb|RenewDocumentCommand|.
-
-\begin{presentcommand}
-  \cmd{SimpleBNFDefOr}
-\end{presentcommand}
-This command is used to typeset the separator symbol between productions. It defaults to \SimpleBNFDefOr. It can be redefined using \verb|RenewDocumentCommand|.
-
-\begin{presentcommand}
-  \cmd{SimpleBNFStretch}
-\end{presentcommand}
-This command is used to control the vertical spacing between consecutive rules.
-It defaults to 0.
-It can be redefined using \verb/Renewdocumentcommand/.
-
-\begin{presentcommand}
-  \cmd{bnfexpr}
-\end{presentcommand}
-This command is used when typesetting the BNF nonterminal and productions. It defaults to a wrappers around \cmd{texttt}. It can be redefined to customized output using \verb|RenewDocumentCommand|.
-
-\begin{presentcommand}
- \cmd{bnfannot}
-\end{presentcommand}
-This command is used when typesetting the annotations on nonterminals and productions. It defaults to a wrappers around \cmd{textit}. It can be redefined to customized output using \verb|RenewDocumentCommand|.
-
-\begin{presentcommand}
-  \env{bnfgrammar}{text}
-\end{presentcommand}
-can be used to typeset BNF grammars. The \textit{text} inside the environment should be formatted as:
-\begin{verbatim}
-  term1 ::= rhs1
+\section{Tutorial for the impatient}\label{sec:tutorial}
+Typesetting a grammar is as simple as typing the BNF grammar in the \verb/bnf/ environment:
+\begin{example}[righthand width=.52\linewidth]
+\begin{center}
+\begin{bnf}
+  $\tau$ : \textsf{Type} ::=
+  | \texttt{num} : numbers
+  | \texttt{str} : strings
   ;;
-  term2 ::= rhs2
+  $e$ : \textsf{Expr} ::=
+  | $x$ : variable
+  | $n$ : numeral
+  | \texttt{$e$ + $e$} : addition
+  | \texttt{$e$ * $e$} : multiplication
+  | \texttt{$e$ \textasciicircum{} $e$} : concatenation
+  | \texttt{len($e$)} : length
+  | \texttt{let $x$ = $e_1$ in $e_2$} : definition
+\end{bnf}
+\end{center}
+\end{example}
+
+Typically, each column in the BNF grammar has the same font style.
+In the example above, the comments in the first column, e.g., \textsf{Type}, is typeset in sans-serif, and the second column in math mode, e.g., $\tau$.
+The column for the right-hand side is (mostly) typeset in typewriter font with a bit of non-terminals like $e$ typeset in math mode.
+
+\textsf{simplebnf} provides a straightforward way to customize the font styles for each column\footnote{Note that you must provide a manual alignment specification with the key \texttt{colspec}.}:
+\begin{listing}
+\begin{bnf}[
+  colspec = {llcll},
+  column{1} = {font = \sffamily},
+  column{2} = {mode = dmath},
+  column{4} = {font = \ttfamily},
+]
+  \tau : Type ::=
+  | num : numbers
+  | str : strings
   ;;
-  ...
-  termk ::= rhsk
-\end{verbatim}
-where each of the \textit{rhs} represents alternative syntactic forms of the \textit{term}. An annotation may accompany each alternative in which case the alternative must be separated from its annotation with a colon (\verb/:/). If you don't need annotations, simply omit the colons and annotations altogether. The alternatives themselves are separated using the pipe symbol (\verb/|/).
+  e : Expr ::=
+  | $x$ : variable
+  | $n$ : numeral
+  | $e$ + $e$ : addition
+  | $e$ * $e$ : multiplication
+  | $e$ \textasciicircum{} $e$ : concatenation
+  | len($e$) : length
+  | let $x$ = $e_1$ in $e_2$ : definition
+\end{bnf}
+\end{listing}
+If you find yourself using the same configuration repeatedly, you can fix the desired configuration using \cmd{SetBNFLayout}.
+Once set using \cmd{SetBNFLayout}, the configuration is applied to all subsequent \verb/bnf/ environments:
+\begin{listing}
+% Some where above...
+  \SetBNFLayout{
+  colspec = {llcll},
+  column{1} = {font = \sffamily},
+  column{2} = {mode = dmath},
+  column{4} = {font = \ttfamily},
+}
+% ...
+\begin{bnf}
+  \tau : Type ::=
+  | num : numbers
+  | str : strings
+  ;;
+  e : Expr ::=
+  | $x$ : variable
+  | $n$ : numeral
+  | $e$ + $e$ : addition
+  | $e$ * $e$ : multiplication
+  | $e$ \textasciicircum{} $e$ : concatenation
+  | len($e$) : length
+  | let $x$ = $e_1$ in $e_2$ : definition
+\end{bnf}
+\end{listing}
 
-A sample code and the result is shown below:
-\begin{exampleside}
-  \begin{bnfgrammar}
-    a \in \textit{Vars} : variables
-    ;;
-    expr ::=
-      expr + term : sum
-    | term        : term
-    ;;
-    term ::=
-      term * a : product
-    | a        : variable
-  \end{bnfgrammar}
-\end{exampleside}
+Since these customizations are provided by the backend \textsf{tabularray}\footnote{\url{https://github.com/lvjr/tabularray}}, consult its documentation for more details.
+The corresponding command is \cmd{SetTblrInner}.
 
-Annotations can also be provided on left-hand sides, to label the nonterminal instead of a specific production.
-\begin{exampleside}
+For more advanced customization, such as changing default delimiters and symbols, continue to section~\ref{sec:config}.
+
+\section{Configuration}\label{sec:config}
+While the default configuration should be sufficient for most use cases, some grammars may require using different delimiters and symbols.
+For example, the language itself may contain \verb/->/ as a syntactic form, which conflicts with one of the default symbols for the rule relation.
+
+To this end, \textsf{simplebnf} provides a number of options to configure the DSL used to typeset the grammar.
+Some examples of customizable symbols include the delimiters for productions and alternatives, the relation symbol between the left-hand side and the right-hand side, the annotation symbol, and more.
+
+The default configuration is shown in table~\ref{tab:config}.
+\begin{longtblr}[
+  caption = {Default key-values for the configuration of \textsf{simplebnf}.},
+  label = {tab:config}
+]{
+  colspec={ll},
+  row{2-Z}={font=\ttfamily}
+}
+  \toprule
+  Key & Default value \\
+  \midrule
+  prod-delim & ;;\\
+  new-line-delim & \fakeverb{\|}\\
+  single-line-delim & //\\
+  comment & :\\
+  relation & \fakeverb{{::=|->|:in:}}\\
+  relation-sym-map & {
+    \{\\
+    \quad\fakeverb{{::=} = {\ensuremath{\Coloneqq}},}\\
+    \quad\fakeverb{{->} = {\ensuremath{\to}},}\\
+    \quad\fakeverb{{:in:} = {\ensuremath{\in}},}\\
+    \}
+  }\\
+  or-sym & \fakeverb{$|$}\\
+  prod-sep & 2pt\\
+  row-sep & 0pt\\
+  \bottomrule
+\end{longtblr}
+
+An exmaple of customizing the configuration is shown below:
+\begin{example}[righthand width=.52\linewidth]*
+\begin{center}
+\begin{bnf}(
+  prod-delim = {--},
+  new-line-delim = {\&},
+  single-line-delim = {\&\&},
+  comment = {//},
+  relation-sym-map =
+    {
+      {->} = {\ensuremath{\hookrightarrow}},
+      {:in:} = {\ensuremath{\in}},
+    },
+  or-sym = {},
+)[
+  colspec = {llcll},
+  column{1} = {font = \sffamily},
+  column{2} = {mode = dmath},
+  column{4} = {font = \ttfamily},
+]
+  \tau // Type ->
+  & num // numbers
+  & str // strings
+  --
+  e // Expr ->
+  & $x$ // variable
+  & $n$ // numeral
+  & $e$ + $e$ // addition
+  & $e$ * $e$ // multiplication
+  & $e$ \textasciicircum{} $e$ // concatenation
+  & len($e$) // length
+  & let $x$ = $e_1$ in $e_2$ // definition
+\end{bnf}
+\end{center}
+\end{example}
+
+
+\subsection{Production delimiter}
+The default production delimiter \verb/prod-delim/ is \verb/;;/.
+This will separate different productions in the same grammar.
+
+\subsection{New-line alternative delimiter}
+The default new-line alternative delimiter \verb/new-line-delim/ is \verb/\|/, which will actually match verbatim \verb/\|/ in the grammar.
+This will separate different alternatives into different lines in the same production.
+
+\subsection{Single-line alternative delimiter}
+The default single-line alternative delimiter \verb/single-line-delim/ is \verb|//|.
+The difference between the single-line alternative delimiter and the new-line alternative delimiter is that the former will not add a new line after the delimiter.
+
+For consecutive alternatives delimited by the single-line alternative delimiter, only the last of them can be annotated.
+
+Note that the single-line alternative delimiter must not contain the new-line alternative delimiter as a substring.
+
+\subsection{Annotation delimiter}
+The default annotation delimiter \verb/comment/ is \verb/:/.
+This will separate the syntactic form and the annotation within the alternative.
+
+\subsection{Rule relations and the symbol map}
+\textsf{simplebnf} provides a \verb/::=/, \verb/->/, and \verb/:in:/ for the rule relation between the left-hand side and the right-hand side.
+Each of them is mapped to a symbol in the \verb/relation-sym-map/ key-value list; By default, they are mapped to $\Coloneqq$ (\verb/\ensuremath{\Coloneqq}/), $\to$ (\verb/\ensuremath{\to}/), and $\in$ (\verb/\ensuremath{\in}/), respectively.
+
+To provide a custom relation symbol, provide the desired symbol and the mapping to the \verb/relation-sym-map/ key-value list and to the \verb/relation/.
+
+\subsection{Or symbol}
+The default or symbol \verb/or-sym/ is \verb/$|$/.
+Probably the most common use case for this option is to remove the or symbol altogether by setting it to \verb/{}/.
+
+\subsection{Production separation}
+The default production separation \verb/prod-sep/ is \verb/2pt/.
+This will add a vertical space between the productions.
+
+\subsection{Row separation}
+The default row separation \verb/row-sep/ is \verb/0pt/.
+This will add a vertical space between the alternatives in the same production.
+
+
+\section{Caveats}
+The choices of delimiters and symbols should be carefully made, in order to avoid conflicts with the grammar of the target language and our meta-language, \TeX{}.
+
+Another subtlety to consider while customizing delimiters, is that certain delimiters not contain the others as a substring.
+For instance, as mentioned in section~\ref{sec:config}, the single-line alternative delimiter must not contain the new-line alternative delimiter as a substring.
+
+When using custom OpenType fonts with the \verb/unicode-math/ package in \XeLaTeX{} or \LuaLaTeX{}, beware of the fact that many fonts lack the \verb/\Coloneqq/ symbol, $\Coloneqq$.
+The easiest way to fix this is to actually use a font that provides the symbol, such as \verb/Garamond-Math/, which comes with the \TeX{}Live installation\footnote{\fakeverb{\Coloneq} is not a typo of \fakeverb{\Coloneqq}.}.
+\begin{listing}
+\setmathfont{Garamond-Math.otf}[
+  Scale = MatchUppercase,
+  range = {\Coloneq}
+]
+\end{listing}
+
+
+\section{The deprecated \texttt{bnfgrammar} environment}
+Prior to version 1.0.0, the package provided a sole environment \verb/bnfgrammar/ for typesetting grammars.
+While it is still available, it is now deprecated and will be removed in a future release.
+Using it will result in a deprecation warning.
+
+To migrate to the new \verb/bnf/ environment, simply replace the \verb/bnfgrammar/ environment with \verb/bnf/, and replace \verb/\in/ with \verb/:in:/ and \verb/||/ with \verb|//|.
+While there will be some differences in the spacings and the font styles, it is an easy fix.
+See section~\ref{sec:tutorial} for more details.
+
+Below is an example of using the deprecated \verb/bnfgrammar/ environment, left here for historical reasons.
+\begin{example}
   \begin{bnfgrammar}
     a : Variables \in \textit{Vars}
     ;;
@@ -245,48 +428,71 @@ Annotations can also be provided on left-hand sides, to label the nonterminal in
       expr + term
     | term
     ;;
-    term ::=
-      term * a
-    | a
-  \end{bnfgrammar}
-\end{exampleside}
-
-You can also provide an optional specification to the grammar environment, to redefine alignment or spacing.
-\begin{tcblisting}{text above listing}
-  \begin{bnfgrammar}[lr@{\hspace{4pt}}c@{\hspace{2pt}}ll]
-    a : Variables \in \textit{Vars}
-    ;;
-    expr ::=
-      expr + term : sum
-    | term        : term
-    ;;
-    term ::=
-      term * a : product
-    | a        : variable
-  \end{bnfgrammar}
-\end{tcblisting}
-
-If you want to typeset multiple productions on a single line, you can use double vertical bars by default.
-\begin{exampleside}
-  \begin{bnfgrammar}
-    a \in \textit{Vars}
-    ;;
-    expr ::= expr + term || term
-    ;;
     term ::= term * a || a
   \end{bnfgrammar}
-\end{exampleside}
+\end{example}
 
-The second and third optional arguments specify regular expressions for the line-breaking and non-breaking RHS seperators:
-\begin{tcblisting}{text above listing}
-  \begin{bnfgrammar}[llcll][\|\|][\|]
-    a \in \textit{Vars}
-    ;;
-    expr ::= expr + term | term
-    ;;
-    term ::= term * a
-    || a
-  \end{bnfgrammar}
-\end{tcblisting}
+
+\section{Appendix}\label{sec:appendix}
+The following is the code used to typeset the metagrammar of the \textsf{simplebnf} DSL in the first page.
+\begin{listing}[breakable]
+\begin{bnf}(
+  prod-delim = ;;;,
+  new-line-delim = !,
+  single-line-delim = ?,
+  comment = //,
+  relation = {:::=|:in:},
+  relation-sym-map =
+    {
+      {:::=} = $\Coloneqq$,
+      {:in:} = $\in$,
+    },
+)[
+  colspec = lrcll,
+  column{2} = {mode=dmath},
+  column{4} = {mode=text, font=\ttfamily},
+]
+  G // Gramar :::=
+  ! $P$ // production
+  ! $P \fatsemi {}$ // production w/ a trailing delimiter
+  ! $P \fatsemi G$ // production sequence
+;;;
+  P // Production :::= $L \rightarrowtriangle R$
+;;;
+  L // LHS :::=
+  ! $v$ // metavariable
+  ! $v\!\fatslash\,c$ // annotated metavariable
+;;;
+  R // RHS :::=
+  ! $\talloblong$ // delimiter
+  ! $A \talloblong R$ // alternative sequence
+;;;
+  A // Alternative :::=
+  ! $f$ // syntactic form
+  ! $f\!\fatslash\,c$ // annotated syntactic form
+;;;
+  \fatsemi // Prod. delimiter :::=
+  ! ;; // default symbol
+  ! $\cdots$ // user-defined
+;;;
+  \rightarrowtriangle // Rule relation :::=
+  ! ::= // $\Coloneqq$
+  ! -> // $\to$
+  ! \texttt{\char`\\in} // $\in$
+  ! $\cdots$ // user-defined
+;;;
+  \fatslash // Annot. symbol :::=
+  ! : // default symbol
+  ! $\cdots$ // user-defined
+;;;
+  \talloblong // Alt. delimiter :::=
+  ! | // new-line delimiter
+  ! || // single-line delimiter
+  ! $\cdots$ // user-defined
+;;;
+  v, f, c :in: \textsf{\TeX{} tl} // valid \TeX{} token lists
+;;;
+\end{bnf}
+\end{listing}
 
 \end{document}
