@@ -1,19 +1,60 @@
 \documentclass[a4paper]{article}
 
-\usepackage{stmaryrd}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Font setup %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\usepackage{simplebnf}
-\usepackage{hyperref}
+% Works for pdfLaTeX, XeLaTeX, and LuaLaTeX
+\usepackage{libertine}
+
+% Math/Mono font setup
+\ExplSyntaxOn
+\bool_if:nTF { \sys_if_engine_xetex_p: || \sys_if_engine_luatex_p: }
+  {
+    % Load mathtools before unicode-math
+    \usepackage{mathtools}
+    \usepackage[
+      math-style=ISO,
+      warnings-off={mathtools-colon, mathtools-overbracket},
+    ]{unicode-math}
+    \setmathfont{LibertinusMath-Regular.otf}[Scale = MatchUppercase]
+    \setmathfont{Garamond-Math.otf}[
+      Scale = MatchUppercase,
+      range = {\Coloneq}
+    ]
+
+    \setmonofont{Inconsolatazi4}[
+      Extension = .otf,
+      UprightFont = *-Regular,
+      BoldFont = *-Bold,
+      Scale=MatchLowercase,
+    ]
+  }
+  {
+    \usepackage[libertine]{newtxmath}
+    \usepackage{inconsolata}
+  }
+\ExplSyntaxOff
+
+% Some fancy symbols (prevent being overwritten by math fonts)
+\AtBeginDocument{%
+  \usepackage[
+    only, fatsemi, fatslash, talloblong, rightarrowtriangle
+  ]{stmaryrd}%
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Presentations %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \usepackage{tcolorbox}
 \tcbuselibrary{listings,breakable}
-\tcbset{listing engine=listings,colframe=black,colback=white,size=small}
+\tcbset{listing engine=listings, colframe=black, colback=white, size=small}
 
 \NewDocumentEnvironment {exampleside} {}
   { \tcblisting{listing side text,righthand width=.55\textwidth} }
   { \endtcblisting }
-
-\NewDocumentCommand \cmd { m } {\texttt{\textbackslash#1}}
 
 \NewDocumentEnvironment { presentcommand } { b }
   {%
@@ -24,13 +65,35 @@
   }
   { }
 
+
+\NewDocumentCommand \cmd { m } {\texttt{\char`\\#1}}
 \NewDocumentCommand \env { m m }
   {
     \texttt{%
-      \textbackslash begin\{#1\} \textrm{#2}%
-      \textbackslash end\{#1\}%
+      \char`\\begin\{#1\} \textrm{#2}%
+      \char`\\end\{#1\}%
     }%
   }
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% simplebnf %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{simplebnf}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Miscellaneous %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ``Make sure it comes *last* of your loaded packages"
+\usepackage{hyperref}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Metadata %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \title{%
   \textsf{simplebnf} --- A simple package to format Backus-Naur form%
@@ -38,6 +101,7 @@
 \author{Jay Lee\footnote{E-mail: %
   \href{mailto:jaeho.lee@snu.ac.kr}{\texttt{jaeho.lee@snu.ac.kr}}}}
 \date{2023/11/23}
+
 
 \begin{document}
 \maketitle
