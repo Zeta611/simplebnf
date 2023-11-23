@@ -276,9 +276,31 @@
   { }
 
 
-\NewDocumentCommand \SetBNFInner { m }
+\NewDocumentCommand \SetBNFLayout { m }
   {
     \SetTblrInner[@simplebnf_tblr_env]{#1}
+  }
+
+
+\NewDocumentCommand \SetBNFConfig { m }
+  {
+    \keys_set:nn { simplebnf }
+      {
+        prod-delim = ;;,
+        new-line-delim = \|,
+        single-line-delim = //,
+        comment = :,
+        relation = {::=|->|:in:},
+        relation-sym-map =
+          {
+            {::=} = {\ensuremath{\Coloneqq}},
+            {->} = {\ensuremath{\to}},
+            {:in:} = {\ensuremath{\in}},
+          },
+        or-sym = $|$,
+        prod-sep = 2pt,
+        row-sep = 0pt,
+      }
   }
 
 
