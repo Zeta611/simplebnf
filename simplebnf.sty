@@ -93,6 +93,19 @@
 \cs_generate_variant:Nn \regex_replace_all:NnN {NVN}
 
 
+\msg_new:nnn { simplebnf } { lhs } { Malformed~LHS~\msg_line_context: }
+\msg_new:nnn { simplebnf } { alt } { Malformed~alternative~\msg_line_context: }
+\msg_new:nnn { simplebnf } { prod } { Malformed~production~\msg_line_context: }
+\msg_new:nnn { simplebnf } { unk-rel } { Unknown~relation~\msg_line_context: }
+\msg_new:nnn { simplebnf } { no-rel } { No~relation~found~\msg_line_context: }
+\msg_new:nnn { simplebnf } { dep }
+  {
+    Environment~bnfgrammar~is~deprecated.~
+    Consider~using~the~environment~bnf.~
+    Consult~the~documentation~for~more~information.
+  }
+
+
 %% Typeset a single lhs of a production.
 %% #1 - lhs : either term or (term : annotation)
 \cs_new:Nn \__simplebnf_typeset_lhs:n
@@ -119,7 +132,7 @@
 
     % There should be no more tokens in the sequence.
     \seq_if_empty:NF \l_tmpa_seq
-      { \msg_error:nn { simplebnf } { Left-hand~side~is~malformed:~#1 } }
+      { \msg_error:nnn { simplebnf } { lhs } { #1 } }
   }
 
 
@@ -155,7 +168,7 @@
 
         % There should be no more tokens in the sequence.
         \seq_if_empty:NF \l_tmpa_seq
-          { \msg_error:nn { simplebnf } { Alternative~is~malformed:~#1 } }
+          { \msg_error:nnn { simplebnf } { alt } { #1 } }
       }
       { % no annotation
         \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
@@ -225,8 +238,7 @@
         \seq_pop_left:NN \l__simplebnf_lhs_rhs_pair_seq \l__simplebnf_rhs_tl
 
         \seq_if_empty:NF \l__simplebnf_lhs_rhs_pair_seq
-          { \msg_error:nn { simplebnf } { Malformed~production:~#1 } }
-
+          { \msg_error:nnn { simplebnf } { prod } { #1 } }
         % Build the LHS
         \__simplebnf_typeset_lhs:n \l__simplebnf_lhs_tl
 
@@ -241,7 +253,7 @@
             \tl_put_right:Nn \l__simplebnf_table_tl { & }
           }
           {
-            \msg_error:nn { simplebnf } { Unknown~rule~relation:~#1 }
+            \msg_warning:nnn { simplebnf } { unk-rel } { #1 }
             \tl_put_right:Nn \l__simplebnf_table_tl { & & }
           }
         % Build the RHS
@@ -254,7 +266,7 @@
         \bool_set_true:N \l__simplebnf_first_alternative_bool
         \seq_map_function:NN \l__simplebnf_alternative_seq \__simplebnf_typeset_rhs:n
       }
-      { \msg_error:nn {simplebnf} { No~rule~relation~found:~#1 } }
+      { \msg_error:nnn { simplebnf } { no-rel } { #1 } }
   }
 
 
@@ -444,7 +456,10 @@
             \bool_set_true:N \l__simplebnf_first_alternative_bool
             \seq_map_function:NN \l__simplebnf_alternative_seq \@dep__simplebnf_typeset_rhs:n
           }
-          { \msg_error:nn {simplebnf} { Could~not~parse~#1 } }
+          {
+            \msg_error:nnn { simplebnf } { error-message }
+              { Could~not~parse~#1 }
+          }
       }
   }
 
@@ -486,6 +501,7 @@
 %% #3 - grammar
 \NewDocumentEnvironment { bnfgrammar } { O{llcll} O{[^\|]\|[^\|]} O{\|\|} +b }
   {
+    \msg_warning:nn { simplebnf } { dep }
     \begin{center}
       \begin{tabular}{#1}
         \@dep__simplebnf_typeset_grammar:nnn { #2 } { #3 } { #4 }
