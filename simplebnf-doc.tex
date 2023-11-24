@@ -99,6 +99,12 @@
 \usepackage{codehigh}
 
 
+\newcommand*{\secref}[1]{\hyperref[{#1}]{section~\ref*{#1} -- \emph{\nameref*{#1}}}}
+\newcommand*{\subsecref}[1]{\hyperref[{#1}]{subsection~\ref*{#1} -- \emph{\nameref*{#1}}}}
+\newcommand*{\subsubsecref}[1]{\hyperref[{#1}]{\nameref*{#1}}}
+\newcommand*{\parref}[1]{\hyperref[{#1}]{\nameref*{#1}}}
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% simplebnf %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -115,7 +121,7 @@
 \newcommand*{\LuaLaTeX}{\hologo{LuaLaTeX}}
 
 % ``Make sure it comes *last* of your loaded packages"
-\usepackage{hyperref}
+\usepackage[pdfborder={0 0 0}, colorlinks=true]{hyperref}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -139,7 +145,7 @@ This package provides a simple way for typesetting grammars in Backus-Naur form 
 It features a flexible configuration system, allowing for the customization of the domain-specific language (DSL) used in typesetting the grammar.
 Additionally, the package comes with sensible defaults.
 
-Below is the metagrammar of the DSL as defined in this package, which is typeset using the package itself.\footnote{The code is shown in the appendix (section~\ref{sec:appendix}).}
+Below is the metagrammar of the DSL as defined in this package, which is typeset using the package itself.\footnote{The code is shown in \nameref{sec:appendix}.}
 \begin{tcolorbox}[sharp corners]
   \begin{center}
     \begin{bnf}(
@@ -254,7 +260,7 @@ If you find yourself using the same configuration repeatedly, you can fix the de
 Once set using \cmd{SetBNFLayout}, the configuration is applied to all subsequent \verb/bnf/ environments:
 \begin{listing}
 % Some where above...
-  \SetBNFLayout{
+\SetBNFLayout{
   colspec = {llcll},
   column{1} = {font = \sffamily},
   column{2} = {mode = dmath},
@@ -280,7 +286,7 @@ Once set using \cmd{SetBNFLayout}, the configuration is applied to all subsequen
 Since these customizations are provided by the backend \textsf{tabularray}\footnote{\url{https://github.com/lvjr/tabularray}}, consult its documentation for more details.
 The corresponding command is \cmd{SetTblrInner}.
 
-For more advanced customization, such as changing default delimiters and symbols, continue to section~\ref{sec:config}.
+For more advanced customization, such as changing default delimiters and symbols, continue to \secref{sec:config}.
 
 \section{Configuration}\label{sec:config}
 While the default configuration should be sufficient for most use cases, some grammars may require using different delimiters and symbols.
@@ -289,7 +295,7 @@ For example, the language itself may contain \verb/->/ as a syntactic form, whic
 To this end, \textsf{simplebnf} provides a number of options to configure the DSL used to typeset the grammar.
 Some examples of customizable symbols include the delimiters for productions and alternatives, the relation symbol between the left-hand side and the right-hand side, the annotation symbol, and more.
 
-The default configuration is shown in table~\ref{tab:config}.
+The default configuration is shown in \autoref{tab:config}.
 \begin{longtblr}[
   caption = {Default key-values for the configuration of \textsf{simplebnf}.},
   label = {tab:config}
@@ -319,7 +325,7 @@ The default configuration is shown in table~\ref{tab:config}.
 \end{longtblr}
 
 An exmaple of customizing the configuration is shown below:
-\begin{example}[righthand width=.52\linewidth]*
+\begin{example}*
 \begin{center}
 \begin{bnf}(
   prod-delim = {--},
@@ -353,6 +359,44 @@ An exmaple of customizing the configuration is shown below:
 \end{bnf}
 \end{center}
 \end{example}
+
+
+Furthermore, the configuration can be set globally using \cmd{SetBNFConfig}, similar to \cmd{SetBNFLayout}:
+\begin{listing}
+% Some where above...
+\SetBNFConfig{
+  prod-delim = {--},
+  new-line-delim = {\&},
+  single-line-delim = {\&\&},
+  comment = {//},
+  relation-sym-map =
+    {
+      {->} = {\ensuremath{\hookrightarrow}},
+      {:in:} = {\ensuremath{\in}},
+    },
+  or-sym = {},
+}
+% ...
+\begin{bnf}[
+  colspec = {llcll},
+  column{1} = {font = \sffamily},
+  column{2} = {mode = dmath},
+  column{4} = {font = \ttfamily},
+]
+  \tau // Type ->
+  & num // numbers
+  & str // strings
+  --
+  e // Expr ->
+  & $x$ // variable
+  & $n$ // numeral
+  & $e$ + $e$ // addition
+  & $e$ * $e$ // multiplication
+  & $e$ \textasciicircum{} $e$ // concatenation
+  & len($e$) // length
+  & let $x$ = $e_1$ in $e_2$ // definition
+\end{bnf}
+\end{listing}
 
 
 \subsection{Production delimiter}
@@ -398,7 +442,7 @@ This will add a vertical space between the alternatives in the same production.
 The choices of delimiters and symbols should be carefully made, in order to avoid conflicts with the grammar of the target language and our meta-language, \TeX{}.
 
 Another subtlety to consider while customizing delimiters, is that certain delimiters not contain the others as a substring.
-For instance, as mentioned in section~\ref{sec:config}, the single-line alternative delimiter must not contain the new-line alternative delimiter as a substring.
+For instance, as mentioned in \secref{sec:config}, the single-line alternative delimiter must not contain the new-line alternative delimiter as a substring.
 
 When using custom OpenType fonts with the \verb/unicode-math/ package in \XeLaTeX{} or \LuaLaTeX{}, beware of the fact that many fonts lack the \verb/\Coloneqq/ symbol, $\Coloneqq$.
 The easiest way to fix this is to actually use a font that provides the symbol, such as \verb/Garamond-Math/, which comes with the \TeX{}Live installation\footnote{\fakeverb{\Coloneq} is not a typo of \fakeverb{\Coloneqq}.}.
@@ -417,7 +461,7 @@ Using it will result in a deprecation warning.
 
 To migrate to the new \verb/bnf/ environment, simply replace the \verb/bnfgrammar/ environment with \verb/bnf/, and replace \verb/\in/ with \verb/:in:/ and \verb/||/ with \verb|//|.
 While there will be some differences in the spacings and the font styles, it is an easy fix.
-See section~\ref{sec:tutorial} for more details.
+See \secref{sec:tutorial} for more details.
 
 Below is an example of using the deprecated \verb/bnfgrammar/ environment, left here for historical reasons.
 \begin{example}
@@ -433,7 +477,7 @@ Below is an example of using the deprecated \verb/bnfgrammar/ environment, left 
 \end{example}
 
 
-\section{Appendix}\label{sec:appendix}
+\section*{Appendix}\label{sec:appendix}
 The following is the code used to typeset the metagrammar of the \textsf{simplebnf} DSL in the first page.
 \begin{listing}[breakable]
 \begin{bnf}(
