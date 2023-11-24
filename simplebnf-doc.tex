@@ -324,6 +324,10 @@ The default configuration is shown in \autoref{tab:config}.
   \bottomrule
 \end{longtblr}
 
+The key-value list can be provided as an optional argument to the \verb/bnf/ environment, wrapped in \verb/()/.
+The optional key-value list for the layout---wrapped in \verb/[]/---should be provided after the configuration key-value list.
+See \subsecref{subsec:layout} for more details.
+
 An exmaple of customizing the configuration is shown below:
 \begin{example}*
 \begin{center}
@@ -437,6 +441,44 @@ This will add a vertical space between the productions.
 The default row separation \verb/row-sep/ is \verb/0pt/.
 This will add a vertical space between the alternatives in the same production.
 
+\subsection{Layout}\label{subsec:layout}
+As mentioned in \secref{sec:tutorial}, the layout of the \verb/bnf/ environment can be customized per-enviroment using the key-value list in the optional argument wrapped in \verb/[]/.
+When provided, these should be provided after the configuration key-value list, which is wrapped in \verb/()/.
+
+The optional key-value list for the layout is passed to the backend \textsf{tabularray} package.
+
+An example of customizing the layout is shown below:
+\begin{example}[righthand width=.53\linewidth]
+\begin{center}
+\begin{bnf}(
+  prod-delim = {--},
+  or-sym = {},
+  prod-sep = 5pt,
+)[
+  colspec = {|[2pt, gray5]llcll},
+  column{1} = {font = \sffamily},
+  column{2} = {mode = dmath},
+  column{4} = {font = \ttfamily},
+  column{5} = {font = \itshape},
+  cell{9}{4} = {cmd = \fbox},
+  row{-} = {bg = azure9},
+]
+  \tau : Type ::=
+  | num : numbers
+  | str : strings
+  --
+  e : Expr ::=
+  | $x$ : variable
+  | $n$ : numeral
+  | $e$ + $e$ : addition
+  | $e$ * $e$ : multiplication
+  | $e$ \textasciicircum{} $e$ : concatenation
+  | len($e$) : length
+  | let $x$ = $e_1$ in $e_2$ : definition
+\end{bnf}
+\end{center}
+\end{example}
+
 
 \section{Caveats}
 The choices of delimiters and symbols should be carefully made, in order to avoid conflicts with the grammar of the target language and our meta-language, \TeX{}.
@@ -460,6 +502,7 @@ While it is still available, it is now deprecated and will be removed in a futur
 Using it will result in a deprecation warning.
 
 To migrate to the new \verb/bnf/ environment, simply replace the \verb/bnfgrammar/ environment with \verb/bnf/, and replace \verb/\in/ with \verb/:in:/ and \verb/||/ with \verb|//|.
+Moreover, the new environment does not center the grammar by default, so wrapping it in a \verb/center/ environment is necessary to reproduce the same output.
 While there will be some differences in the spacings and the font styles, it is an easy fix.
 See \secref{sec:tutorial} for more details.
 
