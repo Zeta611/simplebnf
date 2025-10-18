@@ -110,6 +110,7 @@
     Consider~using~the~environment~bnf.~
     Consult~the~documentation~for~more~information.
   }
+\msg_new:nnn { simplebnf } { parse-error } { Could~not~parse~\msg_line_context: }
 
 
 %% Typeset a single lhs of a production.
@@ -426,8 +427,8 @@
             \seq_map_function:NN \l__simplebnf_alternative_seq \@dep__simplebnf_typeset_rhs:n
           }
           {
-            \msg_error:nnn { simplebnf } { error-message }
-              { Could~not~parse~#1 }
+            \msg_error:nnn { simplebnf } { parse-error }
+              { #1 }
           }
       }
   }
