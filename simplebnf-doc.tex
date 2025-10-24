@@ -130,10 +130,10 @@
 
 \title{%
   \textsf{simplebnf} --- A simple package to format Backus-Naur form%
-  \footnote{This file describes v1.0.0.}}
+  \footnote{This file describes v1.0.1.}}
 \author{Jay Lee\footnote{E-mail: %
   \href{mailto:jaeho.lee@snu.ac.kr}{\texttt{jaeho.lee@snu.ac.kr}}}}
-\date{2023/11/25}
+\date{2025/10/24}
 
 
 \begin{document}
@@ -146,6 +146,8 @@ It features a flexible configuration system, allowing for the customization of t
 Additionally, the package comes with sensible defaults.
 
 Below is the metagrammar of the DSL as defined in this package, which is typeset using the package itself.\footnote{The code is shown in \nameref{sec:appendix}.}
+\def\colonincolon{:in:}
+\def\doubleslash{//}
 \begin{tcolorbox}[sharp corners]
   \begin{center}
     \begin{bnf}(
@@ -190,7 +192,7 @@ Below is the metagrammar of the DSL as defined in this package, which is typeset
       \rightarrowtriangle // Rule relation :::=
       ! ::= // $\Coloneqq$
       ! -> // $\to$
-      ! \texttt{\char`\\in} // $\in$
+      ! \colonincolon // $\in$
       ! $\cdots$ // user-defined
     ;;;
       \fatslash // Annot. symbol :::=
@@ -199,7 +201,7 @@ Below is the metagrammar of the DSL as defined in this package, which is typeset
     ;;;
       \talloblong // Alt. delimiter :::=
       ! | // new-line delimiter
-      ! || // single-line delimiter
+      ! \doubleslash // single-line delimiter
       ! $\cdots$ // user-defined
     ;;;
       v, f, c :in: \textsf{\TeX{} tl} // valid \TeX{} token lists
@@ -309,6 +311,7 @@ The default configuration is shown in \autoref{tab:config}.
   prod-delim & ;;\\
   new-line-delim & \fakeverb{\|}\\
   single-line-delim & //\\
+  line-break-delim & \fakeverb{\\}\\
   comment & :\\
   relation & \fakeverb{{::=|->|:in:}}\\
   relation-sym-map & {
@@ -419,6 +422,21 @@ For consecutive alternatives delimited by the single-line alternative delimiter,
 
 Note that the single-line alternative delimiter must not contain the new-line alternative delimiter as a substring.
 
+\subsection{Line-break delimiter}
+The line-break delimiter \verb/line-break-delim/ defaults to \verb/\\/.
+It forces a manual line break inside a single alternative of the right-hand side, aligning the continuation under the RHS column without repeating the relation or the or-symbol.
+
+Example:
+\begin{example}*
+\begin{center}
+\begin{bnf}
+  e : Expr ::=
+  | verylongtoken verylongtoken verylongtoken verylongtoken \\
+    continued tokens still part of the same alternative : long form
+\end{bnf}
+\end{center}
+\end{example}
+
 \subsection{Annotation delimiter}
 The default annotation delimiter \verb/comment/ is \verb/:/.
 This will separate the syntactic form and the annotation within the alternative.
@@ -475,6 +493,20 @@ An example of customizing the layout is shown below:
   | $e$ \textasciicircum{} $e$ : concatenation
   | len($e$) : length
   | let $x$ = $e_1$ in $e_2$ : definition
+\end{bnf}
+\end{center}
+\end{example}
+
+\subsection*{Comment-only rows}
+To insert a non-production row (e.g., a section header or a comment) inside a grammar, use \cmd{bnfcomment}:
+\begin{example}*
+\begin{center}
+\begin{bnf}
+  \\bnfcomment{Types}
+  \tau : Type ::= | num | str
+  ;;
+  \\bnfcomment{Expressions}
+  e : Expr ::= | $x$ | $n$ | $e$ + $e$
 \end{bnf}
 \end{center}
 \end{example}
