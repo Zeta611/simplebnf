@@ -155,19 +155,24 @@
       \l__simplebnf_line_seq
       \l__simplebnf_line_break_delim_tl
       #1
-    \seq_pop_left:NN \l__simplebnf_line_seq \l_tmpa_tl
-    \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
-    \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
-    \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
-    \seq_map_inline:Nn \l__simplebnf_line_seq
+    \tl_clear:N \l_tmpa_tl
+    \seq_if_empty:NF \l__simplebnf_line_seq
       {
-        \tl_set:Nn \l_tmpa_tl { ##1 }
+        \seq_pop_left:NN \l__simplebnf_line_seq \l_tmpa_tl
         \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
         \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
-        \tl_put_right:Nn \l__simplebnf_table_tl { \\ & & & }
         \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
+        \seq_map_inline:Nn \l__simplebnf_line_seq
+          {
+            \tl_set:Nn \l_tmpa_tl { ##1 }
+            \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
+            \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
+            \tl_put_right:Nn \l__simplebnf_table_tl { \\ & & & }
+            \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
+          }
       }
   }
+\cs_generate_variant:Nn \__simplebnf_typeset_rhs_lines:n { V }
 
 
 \cs_new:Nn \__simplebnf_typeset_rhs:n
@@ -193,7 +198,7 @@
         \regex_split:NVNTF \l__simplebnf_comment_regex \l_tmpa_tl \l_tmpa_seq
           { % put an alternate syntax form
             \seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
-            \__simplebnf_typeset_rhs_lines:n \l_tmpa_tl
+            \__simplebnf_typeset_rhs_lines:V \l_tmpa_tl
             \tl_put_right:Nn \l__simplebnf_table_tl { & }
 
             % put an annotation
@@ -206,7 +211,7 @@
               { \msg_error:nnn { simplebnf } { alt } { #1 } }
           }
           { % no annotation
-            \__simplebnf_typeset_rhs_lines:n \l_tmpa_tl
+            \__simplebnf_typeset_rhs_lines:V \l_tmpa_tl
           }
       }
   }
