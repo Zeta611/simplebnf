@@ -498,14 +498,15 @@ An example of customizing the layout is shown below:
 \end{example}
 
 \subsection*{Comment-only rows}
-To insert a non-production row (e.g., a section header or a comment) inside a grammar, use \cmd{bnfcomment}:
+Any row without a rule relation is typeset as a full-width comment row.
+For readability, \textsf{simplebnf} also provides \cmd{bnfcomment}, which simply expands to its argument and can be used to make such rows explicit:
 \begin{example}*
 \begin{center}
 \begin{bnf}
-  \\bnfcomment{Types}
+  \bnfcomment{Types}
   \tau : Type ::= | num | str
   ;;
-  \\bnfcomment{Expressions}
+  \bnfcomment{Expressions}
   e : Expr ::= | $x$ | $n$ | $e$ + $e$
 \end{bnf}
 \end{center}
