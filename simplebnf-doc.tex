@@ -6,6 +6,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Font setup %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\usepackage{microtype}
+
 % Works for pdfLaTeX, XeLaTeX, and LuaLaTeX
 \usepackage{libertine}
 
@@ -42,7 +44,7 @@
 % Some fancy symbols (prevent being overwritten by math fonts)
 \AtBeginDocument{%
   \usepackage[
-    only, fatsemi, fatslash, talloblong, rightarrowtriangle
+    only, fatsemi, fatslash, fatbslash, talloblong, rightarrowtriangle
   ]{stmaryrd}%
 }
 
@@ -130,10 +132,10 @@
 
 \title{%
   \textsf{simplebnf} --- A simple package to format Backus-Naur form%
-  \footnote{This file describes v1.0.1.}}
+  \footnote{This file describes v1.1.0.}}
 \author{Jay Lee\footnote{E-mail: %
-  \href{mailto:jaeho.lee@snu.ac.kr}{\texttt{jaeho.lee@snu.ac.kr}}}}
-\date{2025/10/24}
+  \href{mailto:jay.lee@berkeley.edu}{\texttt{jay.lee@berkeley.edu}}}}
+\date{2026/05/19}
 
 
 \begin{document}
@@ -148,6 +150,8 @@ Additionally, the package comes with sensible defaults.
 Below is the metagrammar of the DSL as defined in this package, which is typeset using the package itself.\footnote{The code is shown in \nameref{sec:appendix}.}
 \def\colonincolon{:in:}
 \def\doubleslash{//}
+\def\doublebslash{\char`\\\char`\\}
+\def\metabnfcomment{\char`\\bnfcomment}
 \begin{tcolorbox}[sharp corners]
   \begin{center}
     \begin{bnf}(
@@ -170,20 +174,23 @@ Below is the metagrammar of the DSL as defined in this package, which is typeset
       ! $P$ // production
       ! $P \fatsemi {}$ // production w/ a trailing delimiter
       ! $P \fatsemi G$ // production sequence
+      ! \texttt{\metabnfcomment\char`{$c$\char`}} // full-line comment
+      ! \texttt{\metabnfcomment\char`{$c$\char`}\,$P$} // commented production
     ;;;
       P // Production :::= $L \rightarrowtriangle R$
     ;;;
       L // LHS :::=
       ! $v$ // metavariable
-      ! $v\!\fatslash\,c$ // annotated metavariable
+      ! $v\!\fatslash\,c$ // commented metavariable
     ;;;
       R // RHS :::=
-      ! $\talloblong$ // delimiter
+      ! $A$ // alternative
       ! $A \talloblong R$ // alternative sequence
     ;;;
       A // Alternative :::=
       ! $f$ // syntactic form
-      ! $f\!\fatslash\,c$ // annotated syntactic form
+      ! $f\fatbslash A$ // line-broken syntactic form
+      ! $f\!\fatslash\,c$ // commented syntactic form
     ;;;
       \fatsemi // Prod. delimiter :::=
       ! ;; // default symbol
@@ -202,6 +209,10 @@ Below is the metagrammar of the DSL as defined in this package, which is typeset
       \talloblong // Alt. delimiter :::=
       ! | // new-line delimiter
       ! \doubleslash // single-line delimiter
+      ! $\cdots$ // user-defined
+    ;;;
+      \fatbslash // Line-break delim :::=
+      ! \doublebslash // default symbol
       ! $\cdots$ // user-defined
     ;;;
       v, f, c :in: \textsf{\TeX{} tl} // valid \TeX{} token lists
@@ -295,7 +306,7 @@ While the default configuration should be sufficient for most use cases, some gr
 For example, the language itself may contain \verb/->/ as a syntactic form, which conflicts with one of the default symbols for the rule relation.
 
 To this end, \textsf{simplebnf} provides a number of options to configure the DSL used to typeset the grammar.
-Some examples of customizable symbols include the delimiters for productions and alternatives, the relation symbol between the left-hand side and the right-hand side, the annotation symbol, and more.
+Some examples of customizable symbols include the delimiters for productions and alternatives, the relation symbol between the left-hand side and the right-hand side, the comment symbol, and more.
 
 The default configuration is shown in \autoref{tab:config}.
 \begin{longtblr}[
@@ -309,9 +320,9 @@ The default configuration is shown in \autoref{tab:config}.
   Key & Default value \\
   \midrule
   prod-delim & ;;\\
-  new-line-delim & \fakeverb{\|}\\
+  new-line-delim & \fakeverb{|}\\
   single-line-delim & //\\
-  line-break-delim & \fakeverb{\\}\\
+  line-break-delim & \fakeverb{\\\\}\\
   comment & :\\
   relation & \fakeverb{{::=|->|:in:}}\\
   relation-sym-map & {
@@ -338,7 +349,7 @@ An exmaple of customizing the configuration is shown below:
   prod-delim = {--},
   new-line-delim = {\&},
   single-line-delim = {\&\&},
-  comment = {//},
+  comment = {;},
   relation-sym-map =
     {
       {->} = {\ensuremath{\hookrightarrow}},
@@ -351,31 +362,31 @@ An exmaple of customizing the configuration is shown below:
   column{2} = {mode = dmath},
   column{4} = {font = \ttfamily},
 ]
-  \tau // Type ->
-  & num // numbers
-  & str // strings
+  \tau ; Type ->
+  & num ; numbers
+  & str ; strings
   --
-  e // Expr ->
-  & $x$ // variable
-  & $n$ // numeral
-  & $e$ + $e$ // addition
-  & $e$ * $e$ // multiplication
-  & $e$ \textasciicircum{} $e$ // concatenation
-  & len($e$) // length
-  & let $x$ = $e_1$ in $e_2$ // definition
+  e ; Expr ->
+  & $x$ ; variable
+  & $n$ ; numeral
+  & $e$ + $e$ ; addition
+  & $e$ * $e$ ; multiplication
+  & $e$ \textasciicircum{} $e$ ; concatenation
+  & len($e$) ; length
+  & let $x$ = $e_1$ in $e_2$ ; definition
 \end{bnf}
 \end{center}
 \end{example}
 
 
-Furthermore, the configuration can be set globally using \cmd{SetBNFConfig}, similar to \cmd{SetBNFLayout}:
+The configuration can also be set globally using \cmd{SetBNFConfig}, similar to \cmd{SetBNFLayout}:
 \begin{listing}
 % Some where above...
 \SetBNFConfig{
   prod-delim = {--},
   new-line-delim = {\&},
   single-line-delim = {\&\&},
-  comment = {//},
+  comment = {;},
   relation-sym-map =
     {
       {->} = {\ensuremath{\hookrightarrow}},
@@ -390,18 +401,18 @@ Furthermore, the configuration can be set globally using \cmd{SetBNFConfig}, sim
   column{2} = {mode = dmath},
   column{4} = {font = \ttfamily},
 ]
-  \tau // Type ->
-  & num // numbers
-  & str // strings
+  \tau ; Type ->
+  & num ; numbers
+  & str ; strings
   --
-  e // Expr ->
-  & $x$ // variable
-  & $n$ // numeral
-  & $e$ + $e$ // addition
-  & $e$ * $e$ // multiplication
-  & $e$ \textasciicircum{} $e$ // concatenation
-  & len($e$) // length
-  & let $x$ = $e_1$ in $e_2$ // definition
+  e ; Expr ->
+  & $x$ ; variable
+  & $n$ ; numeral
+  & $e$ + $e$ ; addition
+  & $e$ * $e$ ; multiplication
+  & $e$ \textasciicircum{} $e$ ; concatenation
+  & len($e$) ; length
+  & let $x$ = $e_1$ in $e_2$ ; definition
 \end{bnf}
 \end{listing}
 
@@ -418,7 +429,7 @@ This will separate different alternatives into different lines in the same produ
 The default single-line alternative delimiter \verb/single-line-delim/ is \verb|//|.
 The difference between the single-line alternative delimiter and the new-line alternative delimiter is that the former will not add a new line after the delimiter.
 
-For consecutive alternatives delimited by the single-line alternative delimiter, only the last of them can be annotated.
+For consecutive alternatives delimited by the single-line alternative delimiter, only the last of them can be commented.
 
 Note that the single-line alternative delimiter must not contain the new-line alternative delimiter as a substring.
 
@@ -430,16 +441,16 @@ Example:
 \begin{example}*
 \begin{center}
 \begin{bnf}
-  e : Expr ::=
+  $e$ : Expr ::=
   | verylongtoken verylongtoken verylongtoken verylongtoken \\
     continued tokens still part of the same alternative : long form
 \end{bnf}
 \end{center}
 \end{example}
 
-\subsection{Annotation delimiter}
-The default annotation delimiter \verb/comment/ is \verb/:/.
-This will separate the syntactic form and the annotation within the alternative.
+\subsection{Comment delimiter}
+The default comment delimiter \verb/comment/ is \verb/:/.
+This will separate the syntactic form and the comment within the alternative.
 
 \subsection{Rule relations and the symbol map}
 \textsf{simplebnf} provides a \verb/::=/, \verb/->/, and \verb/:in:/ for the rule relation between the left-hand side and the right-hand side.
@@ -460,13 +471,13 @@ The default row separation \verb/row-sep/ is \verb/0pt/.
 This will add a vertical space between the alternatives in the same production.
 
 \subsection{Layout}\label{subsec:layout}
-As mentioned in \secref{sec:tutorial}, the layout of the \verb/bnf/ environment can be customized per-enviroment using the key-value list in the optional argument wrapped in \verb/[]/.
+As mentioned in \secref{sec:tutorial}, the layout of the \verb/bnf/ environment can be customized per-enviroment using the key-value list in the optional argument wrapped in~\verb/[]/.
 When provided, these should be provided after the configuration key-value list, which is wrapped in \verb/()/.
 
 The optional key-value list for the layout is passed to the backend \textsf{tabularray} package.
 
 An example of customizing the layout is shown below:
-\begin{example}[righthand width=.53\linewidth]
+\begin{example}[righthand width=.51\linewidth]
 \begin{center}
 \begin{bnf}(
   prod-delim = {--},
@@ -488,25 +499,25 @@ An example of customizing the layout is shown below:
   e : Expr ::=
   | $x$ : variable
   | $n$ : numeral
-  | $e$ + $e$ : addition
-  | $e$ * $e$ : multiplication
-  | $e$ \textasciicircum{} $e$ : concatenation
+  | $e$ + $e$ : add
+  | $e$ * $e$ : mult
+  | $e$ \textasciicircum{} $e$ : concat
   | len($e$) : length
   | let $x$ = $e_1$ in $e_2$ : definition
 \end{bnf}
 \end{center}
 \end{example}
 
-\subsection*{Comment-only rows}
-To insert a non-production row (e.g., a section header or a comment) inside a grammar, use \cmd{bnfcomment}:
-\begin{example}*
+\subsection{Full-line comments}\label{subsec:comment}
+To insert a full-line comment row inside a grammar, use \cmd{bnfcomment}:
+\begin{example}
 \begin{center}
 \begin{bnf}
-  \\bnfcomment{Types}
-  \tau : Type ::= | num | str
+  \bnfcomment{Types}
+  $\tau$ : Type ::= \texttt{num} // \texttt{str}
   ;;
-  \\bnfcomment{Expressions}
-  e : Expr ::= | $x$ | $n$ | $e$ + $e$
+  \bnfcomment{Expressions}
+  $e$ : Expr ::= $x$ // $n$ // $e$ + $e$
 \end{bnf}
 \end{center}
 \end{example}
@@ -515,7 +526,7 @@ To insert a non-production row (e.g., a section header or a comment) inside a gr
 \section{Caveats}
 The choices of delimiters and symbols should be carefully made, in order to avoid conflicts with the grammar of the target language and our meta-language, \TeX{}.
 
-Another subtlety to consider while customizing delimiters, is that certain delimiters not contain the others as a substring.
+Another subtlety to consider while customizing delimiters, is that certain delimiters should not contain the others as a substring.
 For instance, as mentioned in \secref{sec:config}, the single-line alternative delimiter must not contain the new-line alternative delimiter as a substring.
 
 When using custom OpenType fonts with the \verb/unicode-math/ package in \XeLaTeX{} or \LuaLaTeX{}, beware of the fact that many fonts lack the \verb/\Coloneqq/ symbol, $\Coloneqq$.
@@ -555,6 +566,10 @@ Below is an example of using the deprecated \verb/bnfgrammar/ environment, left 
 \section*{Appendix}\label{sec:appendix}
 The following is the code used to typeset the metagrammar of the \textsf{simplebnf} DSL in the first page.
 \begin{listing}[breakable]
+\def\colonincolon{:in:}
+\def\doubleslash{//}
+\def\doublebslash{\char`\\\char`\\}
+\def\metabnfcomment{\char`\\bnfcomment}
 \begin{bnf}(
   prod-delim = ;;;,
   new-line-delim = !,
@@ -575,20 +590,23 @@ The following is the code used to typeset the metagrammar of the \textsf{simpleb
   ! $P$ // production
   ! $P \fatsemi {}$ // production w/ a trailing delimiter
   ! $P \fatsemi G$ // production sequence
+  ! \texttt{\metabnfcomment\char`{$c$\char`}} // full-line comment
+  ! \texttt{\metabnfcomment\char`{$c$\char`}\,$P$} // commented production
 ;;;
   P // Production :::= $L \rightarrowtriangle R$
 ;;;
   L // LHS :::=
   ! $v$ // metavariable
-  ! $v\!\fatslash\,c$ // annotated metavariable
+  ! $v\!\fatslash\,c$ // commented metavariable
 ;;;
   R // RHS :::=
-  ! $\talloblong$ // delimiter
+  ! $A$ // alternative
   ! $A \talloblong R$ // alternative sequence
 ;;;
   A // Alternative :::=
   ! $f$ // syntactic form
-  ! $f\!\fatslash\,c$ // annotated syntactic form
+  ! $f\fatbslash A$ // line-broken syntactic form
+  ! $f\!\fatslash\,c$ // commented syntactic form
 ;;;
   \fatsemi // Prod. delimiter :::=
   ! ;; // default symbol
@@ -597,7 +615,7 @@ The following is the code used to typeset the metagrammar of the \textsf{simpleb
   \rightarrowtriangle // Rule relation :::=
   ! ::= // $\Coloneqq$
   ! -> // $\to$
-  ! \texttt{\char`\\in} // $\in$
+  ! \colonincolon // $\in$
   ! $\cdots$ // user-defined
 ;;;
   \fatslash // Annot. symbol :::=
@@ -606,7 +624,11 @@ The following is the code used to typeset the metagrammar of the \textsf{simpleb
 ;;;
   \talloblong // Alt. delimiter :::=
   ! | // new-line delimiter
-  ! || // single-line delimiter
+  ! \doubleslash // single-line delimiter
+  ! $\cdots$ // user-defined
+;;;
+  \fatbslash // Line-break delim :::=
+  ! \doublebslash // default symbol
   ! $\cdots$ // user-defined
 ;;;
   v, f, c :in: \textsf{\TeX{} tl} // valid \TeX{} token lists
