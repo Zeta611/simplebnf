@@ -4,7 +4,7 @@
 %% ---------------------------------------------------------------------------
 %% The simplebnf package --- A simple package to format Backus-Naur form
 %% Maintained by Jay Lee
-%% E-mail: jaeho.lee@snu.ac.kr
+%% E-mail: jay.lee@berkeley.edu
 %% Released under the MIT License.
 %% ---------------------------------------------------------------------------
 %%
@@ -13,7 +13,8 @@
 \providecommand\DeclareCurrentRelease[2]{}
 \DeclareRelease{0.3.2}{2023-01-07}{simplebnf-2023-01-07.sty}
 \DeclareRelease{1.0.0}{2023-11-25}{simplebnf-2023-11-25.sty}
-\DeclareCurrentRelease{}{2025-10-24}
+\DeclareRelease{1.0.1}{2025-10-24}{simplebnf-2025-10-24.sty}
+\DeclareCurrentRelease{}{2026-05-19}
 
 \RequirePackage{expl3,xparse}
 % The new backend is tabularray
@@ -23,8 +24,8 @@
 
 \ProvidesExplPackage
   {simplebnf}
-  {2025-10-24}
-  {1.0.1}
+  {2026-05-19}
+  {1.1.0}
   {A simple package to format Backus–Naur form}
 
 
@@ -32,6 +33,7 @@
 \tl_new:N \l__simplebnf_new_line_delim_tl
 \tl_new:N \l__simplebnf_single_line_delim_tl
 \tl_new:N \l__simplebnf_comment_tl
+\tl_new:N \l__simplebnf_line_break_delim_tl
 \tl_new:N \l__simplebnf_or_sym_tl
 \tl_new:N \l__simplebnf_relation_tl
 \dim_new:N \l__simplebnf_prod_sep_dim
@@ -44,6 +46,7 @@
     new-line-delim .tl_set:N = \l__simplebnf_new_line_delim_tl,
     single-line-delim .tl_set:N = \l__simplebnf_single_line_delim_tl,
     comment .tl_set:N = \l__simplebnf_comment_tl,
+    line-break-delim .tl_set:N = \l__simplebnf_line_break_delim_tl,
     relation .tl_set:N = \l__simplebnf_relation_tl,
     relation-sym-map .code:n =
       { \prop_set_from_keyval:Nn \l__simplebnf_relation_sym_map_prop { #1 } },
@@ -59,6 +62,7 @@
     new-line-delim = \|,
     single-line-delim = //,
     comment = :,
+    line-break-delim = \\,
     relation = {::=|->|:in:},
     relation-sym-map =
       {
@@ -98,6 +102,7 @@
 \cs_generate_variant:Nn \regex_split:NnN {NVN}
 \cs_generate_variant:Nn \regex_set:Nn {NV}
 \cs_generate_variant:Nn \regex_replace_all:NnN {NVN}
+\cs_generate_variant:Nn \seq_set_split:Nnn { NVV }
 
 
 \msg_new:nnn { simplebnf } { lhs } { Malformed~LHS~\msg_line_context: }
@@ -168,7 +173,7 @@
         \regex_split:NVNTF \l__simplebnf_comment_regex \l_tmpa_tl \l_tmpa_seq
           { % put an alternate syntax form
             \seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
-            \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
+            \__simplebnf_typeset_rhs_with_breaks:N \l_tmpa_tl
             \tl_put_right:Nn \l__simplebnf_table_tl { & }
 
             % put an annotation
@@ -181,6 +186,33 @@
               { \msg_error:nnn { simplebnf } { alt } { #1 } }
           }
           { % no annotation
+            \__simplebnf_typeset_rhs_with_breaks:N \l_tmpa_tl
+          }
+      }
+  }
+
+
+% Handle line breaks within a single RHS form.
+% #1 - a tl variable containing the RHS text
+\cs_new:Nn \__simplebnf_typeset_rhs_with_breaks:N
+  {
+    \seq_set_split:NVV \l_tmpb_seq \l__simplebnf_line_break_delim_tl #1
+    \bool_set_true:N \l_tmpb_bool
+    \seq_map_inline:Nn \l_tmpb_seq
+      {
+        \bool_if:NTF \l_tmpb_bool
+          {
+            \bool_set_false:N \l_tmpb_bool
+            \tl_set:Nn \l_tmpa_tl { ##1 }
+            \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
+            \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
+            \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
+          }
+          {
+            \tl_put_right:Nn \l__simplebnf_table_tl { \\ & & & }
+            \tl_set:Nn \l_tmpa_tl { ##1 }
+            \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
+            \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
             \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
           }
       }
@@ -235,6 +267,32 @@
   }
 
 
+% Emit a comment row and optionally process a following production.
+% #1 - comment text (from the braced argument of \bnfcomment)
+% #2 - remaining production text (delimited by \q_stop)
+\cs_new:Npn \__simplebnf_emit_comment_row:nw #1 #2 \q_stop
+  {
+    \tl_put_right:Nn \l__simplebnf_table_tl
+      { \SetCell[c=5]{l} \bnfcomment { #1 } &&&& }
+    \tl_if_blank:nF { #2 }
+      {
+        \tl_put_right:Nn \l__simplebnf_table_tl { \\[\l__simplebnf_prod_sep_dim] }
+        \tl_if_in:nnTF { #2 } { \bnfcomment }
+          { \__simplebnf_handle_comment_production:n { #2 } }
+          { \__simplebnf_typeset_production:n { #2 } }
+      }
+  }
+
+% Handle a production chunk that contains \bnfcomment.
+\cs_new:Nn \__simplebnf_handle_comment_production:n
+  {
+    \tl_set:Nn \l_tmpb_tl { #1 }
+    \tl_replace_once:Nnn \l_tmpb_tl { \bnfcomment } { }
+    \regex_replace_once:nnN { \A \s+ } {} \l_tmpb_tl
+    \exp_after:wN \__simplebnf_emit_comment_row:nw \l_tmpb_tl \q_stop
+  }
+
+
 % The main control sequence that builds the grammar G into \l__simplebnf_table_tl
 \cs_new:Nn \__simplebnf_build_grammar:n
   {
@@ -260,7 +318,9 @@
               {
                 \tl_put_right:Nn \l__simplebnf_table_tl { \\[\l__simplebnf_prod_sep_dim] }
               }
-            \__simplebnf_typeset_production:n { ##1 }
+            \tl_if_in:nnTF { ##1 } { \bnfcomment }
+              { \__simplebnf_handle_comment_production:n { ##1 } }
+              { \__simplebnf_typeset_production:n { ##1 } }
           }
       }
   }
@@ -463,6 +523,7 @@
 
 \NewDocumentCommand \bnfexpr { m } { \texttt { #1 } }
 \NewDocumentCommand \bnfannot { m } { \textit { #1 } }
+\NewDocumentCommand \bnfcomment { m } { \textit { #1 } }
 
 
 %% Typeset a BNF grammar.
@@ -484,7 +545,7 @@
 
 %% The MIT License (MIT)
 %%
-%% Copyright © 2019-2026 Jay Lee <jaeho.lee@snu.ac.kr>
+%% Copyright © 2019-2026 Jay Lee <jay.lee@berkeley.edu>
 %%
 %% Permission is hereby granted, free of charge, to any person obtaining
 %% a copy of this software and associated documentation files (the "Software"),
