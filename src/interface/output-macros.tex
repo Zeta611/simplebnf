@@ -1,0 +1,8 @@
+%% Redefinable output hooks.
+%%
+%% These wrap the three kinds of typeset material; users may \renewcommand them
+%% to restyle expressions, annotations, and comments.  \bnfexpr and \bnfannot
+%% are also used by the deprecated bnfgrammar engine.
+\NewDocumentCommand \bnfexpr { m } { \texttt { #1 } }
+\NewDocumentCommand \bnfannot { m } { \textit { #1 } }
+\NewDocumentCommand \bnfcomment { m } { \textit { #1 } }

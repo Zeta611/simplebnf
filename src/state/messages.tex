@@ -1,0 +1,13 @@
+%% Diagnostic messages emitted during parsing.
+\msg_new:nnn { simplebnf } { lhs } { Malformed~LHS~\msg_line_context: }
+\msg_new:nnn { simplebnf } { alt } { Malformed~alternative~\msg_line_context: }
+\msg_new:nnn { simplebnf } { prod } { Malformed~production~\msg_line_context: }
+\msg_new:nnn { simplebnf } { unk-rel } { Unknown~relation~\msg_line_context: }
+\msg_new:nnn { simplebnf } { no-rel } { No~relation~found~\msg_line_context: }
+\msg_new:nnn { simplebnf } { dep }
+  {
+    Environment~bnfgrammar~is~deprecated.~
+    Consider~using~the~environment~bnf.~
+    Consult~the~documentation~for~more~information.
+  }
+\msg_new:nnn { simplebnf } { parse-error } { Could~not~parse~\msg_line_context: }

@@ -1,0 +1,50 @@
+%% DEPRECATED.  Typeset a single production for the bnfgrammar engine.
+\cs_new:Nn \@dep__simplebnf_typeset_production:n
+  {
+    \regex_split:nnNTF { ::= } { #1 } \l__simplebnf_lhs_rhs_pair_seq
+      % Parse a ::= definition
+      {
+        %% \l__simplebnf_lhs_rhs_pair_seq    - (lhs, rhses)...
+        %% \l__simplebnf_lhs_tl     - lhs
+        %% \l__simplebnf_rhs_tl - rhses
+        \seq_pop_left:NN \l__simplebnf_lhs_rhs_pair_seq \l__simplebnf_lhs_tl
+        \seq_pop_left:NN \l__simplebnf_lhs_rhs_pair_seq \l__simplebnf_rhs_tl
+
+        \@dep__simplebnf_typeset_lhs:n{\l__simplebnf_lhs_tl}
+        \tl_put_right:Nn \l__simplebnf_table_tl
+          {
+            & \SimpleBNFDefEq &
+          }
+        %% \l__simplebnf_alternative_seq - (rhs:annot | rhs)...
+        \regex_split:NVN \l__simplebnf_new_line_delim_regex \l__simplebnf_rhs_tl \l__simplebnf_alternative_seq
+
+        \bool_set_true:N \l__simplebnf_first_alternative_bool
+        \seq_map_function:NN \l__simplebnf_alternative_seq \@dep__simplebnf_typeset_rhs:n
+      }
+      {
+        % Else, parse a \in declaration (TODO: There is a huge room for generalization)
+        \regex_split:nnNTF { \c{in} } { #1 } \l__simplebnf_lhs_rhs_pair_seq
+          {
+            %% \l__simplebnf_lhs_rhs_pair_seq    - (lhs, rhses)...
+            %% \l__simplebnf_lhs_tl     - lhs
+            %% \l__simplebnf_rhs_tl - rhses
+            \seq_pop_left:NN \l__simplebnf_lhs_rhs_pair_seq \l__simplebnf_lhs_tl
+            \seq_pop_left:NN \l__simplebnf_lhs_rhs_pair_seq \l__simplebnf_rhs_tl
+
+            \@dep__simplebnf_typeset_lhs:n{\l__simplebnf_lhs_tl}
+            \tl_put_right:Nn \l__simplebnf_table_tl
+              {
+                & $\in$ &
+              }
+            %% \l__simplebnf_alternative_seq - (rhs:annot | rhs)...
+            \regex_split:NVN \l__simplebnf_new_line_delim_regex \l__simplebnf_rhs_tl \l__simplebnf_alternative_seq
+
+            \bool_set_true:N \l__simplebnf_first_alternative_bool
+            \seq_map_function:NN \l__simplebnf_alternative_seq \@dep__simplebnf_typeset_rhs:n
+          }
+          {
+            \msg_error:nnn { simplebnf } { parse-error }
+              { #1 }
+          }
+      }
+  }

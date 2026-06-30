@@ -1,0 +1,7 @@
+%% The tabularray backend environment.
+%%
+%% The bnf environment is internally a tabularray environment; its inner row
+%% separation tracks the row-sep key.
+% bnf environment is internally a tabularray environment
+\NewTblrEnviron{@simplebnf_tblr_env}
+\SetTblrInner[@simplebnf_tblr_env]{rowsep=\l__simplebnf_row_sep_dim}

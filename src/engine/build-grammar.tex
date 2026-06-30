@@ -1,0 +1,31 @@
+% The main control sequence that builds the grammar G into \l__simplebnf_table_tl
+\cs_new:Nn \__simplebnf_build_grammar:n
+  {
+    \regex_set:NV \l__simplebnf_new_line_delim_regex \l__simplebnf_new_line_delim_tl
+    \regex_set:NV \l__simplebnf_single_line_delim_regex \l__simplebnf_single_line_delim_tl
+    \regex_set:NV \l__simplebnf_comment_regex \l__simplebnf_comment_tl
+    \regex_set:NV \l__simplebnf_prod_delim_regex \l__simplebnf_prod_delim_tl
+    \tl_put_left:Nn \l__simplebnf_relation_tl { ( }
+    \tl_put_right:Nn \l__simplebnf_relation_tl { ) }
+    \regex_set:NV \l__simplebnf_relation_regex \l__simplebnf_relation_tl
+
+    % \l_tmpa_seq contains the sequence of productions (P; ...).
+    \regex_split:NnN \l__simplebnf_prod_delim_regex { #1 } \l_tmpa_seq
+
+    % Is this the first production of this grammar?
+    \bool_set_true:N \l_tmpa_bool
+    \seq_map_inline:Nn \l_tmpa_seq
+      {
+        \tl_if_blank:nF { ##1 } % ignore empty productions
+          { % If not first, change row
+            \bool_if:NTF \l_tmpa_bool
+              { \bool_set_false:N \l_tmpa_bool }
+              {
+                \tl_put_right:Nn \l__simplebnf_table_tl { \\[\l__simplebnf_prod_sep_dim] }
+              }
+            \tl_if_in:nnTF { ##1 } { \bnfcomment }
+              { \__simplebnf_handle_comment_production:n { ##1 } }
+              { \__simplebnf_typeset_production:n { ##1 } }
+          }
+      }
+  }

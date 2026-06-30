@@ -1,0 +1,24 @@
+% Emit a comment row and optionally process a following production.
+% #1 - comment text (from the braced argument of \bnfcomment)
+% #2 - remaining production text (delimited by \q_stop)
+\cs_new:Npn \__simplebnf_emit_comment_row:nw #1 #2 \q_stop
+  {
+    \tl_put_right:Nn \l__simplebnf_table_tl
+      { \SetCell[c=5]{l} \bnfcomment { #1 } &&&& }
+    \tl_if_blank:nF { #2 }
+      {
+        \tl_put_right:Nn \l__simplebnf_table_tl { \\[\l__simplebnf_prod_sep_dim] }
+        \tl_if_in:nnTF { #2 } { \bnfcomment }
+          { \__simplebnf_handle_comment_production:n { #2 } }
+          { \__simplebnf_typeset_production:n { #2 } }
+      }
+  }
+
+% Handle a production chunk that contains \bnfcomment.
+\cs_new:Nn \__simplebnf_handle_comment_production:n
+  {
+    \tl_set:Nn \l_tmpb_tl { #1 }
+    \tl_replace_once:Nnn \l_tmpb_tl { \bnfcomment } { }
+    \regex_replace_once:nnN { \A \s+ } {} \l_tmpb_tl
+    \exp_after:wN \__simplebnf_emit_comment_row:nw \l_tmpb_tl \q_stop
+  }

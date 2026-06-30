@@ -1,0 +1,25 @@
+%% DEPRECATED.  Typeset a whole grammar for the bnfgrammar engine.
+\seq_new:N \l__input_seq
+\cs_new:Nn \@dep__simplebnf_typeset_grammar:nnn
+  {
+    \regex_set:Nn \l__simplebnf_new_line_delim_regex { #1 }
+    \regex_set:Nn \l__simplebnf_single_line_delim_regex { #2 }
+
+    %% \l__input_seq is a list of term definitions.
+    \regex_split:nnN { ;; } { #3 } \l__input_seq
+
+    \bool_set_true:N \l_tmp_first_term % Is this the first term in this grammar?
+    \seq_map_inline:Nn \l__input_seq
+      {
+        %% If not-first, add newline
+        \bool_if:NTF \l_tmp_first_term
+          {
+            \bool_set_false:N \l_tmp_first_term
+          }
+          {
+            \tl_put_right:Nn \l__simplebnf_table_tl { \\[\SimpleBNFStretch] }
+          }
+
+        \@dep__simplebnf_typeset_production:n { ##1 }
+      }
+  }

@@ -1,0 +1,16 @@
+%% DEPRECATED.  The bnfgrammar environment.
+%% #1 - tabular specification (llcll)
+%% #2 - regexp for newline separator for rhses
+%% #2 - regexp for non-breaking separator for rhses
+%% #3 - grammar
+\NewDocumentEnvironment { bnfgrammar } { O{llcll} O{[^\|]\|[^\|]} O{\|\|} +b }
+  {
+    \msg_warning:nn { simplebnf } { dep }
+    \begin{center}
+      \begin{tabular}{#1}
+        \@dep__simplebnf_typeset_grammar:nnn { #2 } { #3 } { #4 }
+        \tl_use:N \l__simplebnf_table_tl
+      \end{tabular}
+    \end{center}
+  }
+  { }

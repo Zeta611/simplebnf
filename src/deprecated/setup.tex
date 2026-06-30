@@ -1,0 +1,12 @@
+%% DEPRECATED API --- setup for the legacy bnfgrammar engine.
+%%
+%% Everything under src/deprecated/ supports the deprecated bnfgrammar
+%% environment.  It remains functional (with a warning) for backward
+%% compatibility; new documents should use the bnf environment instead.
+
+% Redefinable user-level variables
+\newcommand*\SimpleBNFDefEq{\ensuremath{\Coloneqq}}
+\newcommand*\SimpleBNFDefOr{\ensuremath{|}}
+\newcommand*\SimpleBNFStretch{0em}
+
+\cs_generate_variant:Nn \regex_split:nnNTF {nVNTF}

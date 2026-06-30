@@ -1,0 +1,14 @@
+%% Configuration commands.
+%%
+%% \SetBNFLayout adjusts the tabularray backend; \SetBNFConfig sets simplebnf
+%% keys outside of a single environment invocation.
+\NewDocumentCommand \SetBNFLayout { m }
+  {
+    \SetTblrInner[@simplebnf_tblr_env]{#1}
+  }
+
+
+\NewDocumentCommand \SetBNFConfig { m }
+  {
+    \keys_set:nn { simplebnf } { #1 }
+  }
