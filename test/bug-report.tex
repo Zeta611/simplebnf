@@ -1,0 +1,14 @@
+\documentclass{article}
+\usepackage{simplebnf}
+
+\SetBNFLayout{
+  colspec = {rlcll},
+  column{5} = {font = \itshape},
+}
+
+\begin{document}
+\begin{bnf}
+    U : \textsf{One} ::= x;;
+    V : \textsf{Two} ::= y;;
+\end{bnf}
+\end{document}

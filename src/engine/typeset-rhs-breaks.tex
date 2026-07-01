@@ -15,7 +15,8 @@
             \tl_put_right:NV \l__simplebnf_table_tl \l_tmpa_tl
           }
           {
-            \tl_put_right:Nn \l__simplebnf_table_tl { \\ & & & }
+            % Close col-5 of the preceding row before starting a new one.
+            \tl_put_right:Nn \l__simplebnf_table_tl { & \\ & & & }
             \tl_set:Nn \l_tmpa_tl { ##1 }
             \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
             \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl

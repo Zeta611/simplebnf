@@ -1,0 +1,242 @@
+%%----------------------------------------------------------------------
+%% regression-tests.tex
+%%
+%% Comprehensive regression test suite for simplebnf.
+%% Compile with:  pdflatex regression-tests.tex
+%%
+%% If compilation succeeds without errors, all tests pass.
+%% Each test is a self-contained bnf environment exercising one feature.
+%%----------------------------------------------------------------------
+\documentclass{article}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{simplebnf}
+\usepackage{amsmath}  % for \text, \quad, etc.
+
+\newcounter{testnum}
+\newcommand{\Test}[1]{%
+  \stepcounter{testnum}%
+  \subsection*{Test \thetestnum: #1}%
+}
+
+\begin{document}
+\section*{simplebnf Regression Tests}
+
+%%======================================================================
+%% TEST 1 – Reported bug: backslash command in or-sym
+%% Issue: \; in or-sym lost its backslash during regex substitution.
+%% Expected: thin-space | thin-space separators (not literal ";|;").
+%%======================================================================
+\Test{Backslash command in or-sym (\textbackslash;)}
+\begin{bnf}(or-sym = {$\;|\;$})
+  $e$ : Expr ::=
+  | $x$ // $\lambda x.e$
+\end{bnf}
+
+%%======================================================================
+%% TEST 2 – Multiple backslash commands in or-sym: \quad
+%%======================================================================
+\Test{or-sym with \textbackslash quad}
+\begin{bnf}(or-sym = {$\quad|\quad$})
+  $\tau$ : Type ::=
+  | \texttt{int} // \texttt{bool} // \texttt{string}
+\end{bnf}
+
+%%======================================================================
+%% TEST 3 – or-sym using \mid (a common TeX command)
+%%======================================================================
+\Test{or-sym with \textbackslash mid}
+\begin{bnf}(or-sym = {$\mid$})
+  $e$ : Expr ::= $x$ // $n$ // $e + e$
+\end{bnf}
+
+%%======================================================================
+%% TEST 4 – or-sym using \vert
+%%======================================================================
+\Test{or-sym with \textbackslash vert}
+\begin{bnf}(or-sym = {$\vert$})
+  $v$ : Value ::= $n$ // $\lambda x.e$
+\end{bnf}
+
+%%======================================================================
+%% TEST 5 – or-sym with a plain pipe in math mode (default)
+%%======================================================================
+\Test{or-sym with plain math pipe (default)}
+\begin{bnf}(or-sym = {$|$})
+  $s$ : Stmt ::= $x$ // $n$ // $e + e$
+\end{bnf}
+
+%%======================================================================
+%% TEST 6 – or-sym with \hspace (length-argument backslash command)
+%%======================================================================
+\Test{or-sym with \textbackslash hspace}
+\begin{bnf}(or-sym = {$\hspace{4pt}|\hspace{4pt}$})
+  $p$ : Pat ::= $x$ // $\_$ // $(p, p)$
+\end{bnf}
+
+%%======================================================================
+%% TEST 7 – or-sym with nested braces and backslash (\ensuremath)
+%%======================================================================
+\Test{or-sym with \textbackslash ensuremath}
+\begin{bnf}(or-sym = {\ensuremath{\mid}})
+  $d$ : Decl ::= \texttt{val} // \texttt{fun} // \texttt{type}
+\end{bnf}
+
+%%======================================================================
+%% TEST 8 – Empty or-sym (no separator at all)
+%%======================================================================
+\Test{Empty or-sym}
+\begin{bnf}(or-sym = {})
+  $e$ : Expr ::= $x$ // $n$ // $e + e$
+\end{bnf}
+
+%%======================================================================
+%% TEST 9 – Default or-sym ($|$) with single-line delimiters
+%%======================================================================
+\Test{Default or-sym with single-line delimiters}
+\begin{bnf}
+  $\tau$ : Type ::=
+  | \texttt{num} // \texttt{str}
+  ;;
+  $e$ : Expr ::= $x$ // $n$ // $e + e$
+\end{bnf}
+
+%%======================================================================
+%% TEST 10 – Custom single-line delimiter combined with backslash or-sym
+%%======================================================================
+\Test{Custom single-line-delim with backslash or-sym}
+\begin{bnf}(
+  single-line-delim = {&&},
+  or-sym = {$\;|\;$},
+)
+  $e$ : Expr ::= $x$ && $n$ && $e + e$ : expressions
+\end{bnf}
+
+%%======================================================================
+%% TEST 11 – or-sym with \, (thin space, another backslash command)
+%%======================================================================
+\Test{or-sym with \textbackslash, (thin space)}
+\begin{bnf}(or-sym = {$\,|\,$})
+  $k$ : Kind ::= $\star$ // $k \to k$
+\end{bnf}
+
+%%======================================================================
+%% TEST 12 – Multiple productions with custom or-sym
+%%======================================================================
+\Test{Multiple productions with backslash or-sym}
+\begin{bnf}(or-sym = {$\;|\;$})
+  $\tau$ : Type ::=
+  | \texttt{num}
+  | \texttt{str}
+  ;;
+  $e$ : Expr ::=
+  | $x$ // $\lambda x.e$ // $e\;e$
+\end{bnf}
+
+%%======================================================================
+%% TEST 13 – Line-break delimiter (\\) inside an alternative
+%%======================================================================
+\Test{Line-break delimiter inside alternative}
+\begin{bnf}
+  $e$ : Expr ::=
+  | verylongtoken verylongtoken verylongtoken verylongtoken \\
+    continued tokens still part of the same alternative : long form
+\end{bnf}
+
+%%======================================================================
+%% TEST 14 – Full-line comment with \textbackslash bnfcomment
+%%======================================================================
+\Test{Full-line comments with \textbackslash bnfcomment}
+\begin{bnf}
+  \bnfcomment{Types}
+  $\tau$ : Type ::= \texttt{num} // \texttt{str}
+  ;;
+  \bnfcomment{Expressions}
+  $e$ : Expr ::= $x$ // $n$ // $e$ + $e$
+\end{bnf}
+
+%%======================================================================
+%% TEST 15 – Multiple productions with :in: relation
+%%======================================================================
+\Test{Multiple relations (::=, ->, :in:)}
+\begin{bnf}
+  $\tau$ : Type ::=
+  | \texttt{num}
+  | \texttt{str}
+  ;;
+  $e$ : Expr ::=
+  | $x$
+  | $\lambda x.e$
+  ;;
+  $\Gamma$ : Context :in: ($x$ : $\tau$) list
+\end{bnf}
+
+%%======================================================================
+%% TEST 16 – Commented LHS (metavariable : annotation)
+%%======================================================================
+\Test{Commented LHS}
+\begin{bnf}
+  $x$ : Variable ::= $a$ // $b$ // $c$
+  ;;
+  $n$ : Number ::= $0$ // $1$ // $\ldots$
+\end{bnf}
+
+%%======================================================================
+%% TEST 17 – or-sym with \! (negative thin space) — backslash command
+%%======================================================================
+\Test{or-sym with \textbackslash! (negative thin space)}
+\begin{bnf}(or-sym = {$\!|\!$})
+  $e$ ::= $x$ // $n$ // $e + e$
+\end{bnf}
+
+%%======================================================================
+%% TEST 18 – or-sym containing only backslash commands (no literal chars)
+%%======================================================================
+\Test{or-sym = purely backslash commands}
+\begin{bnf}(or-sym = {\ensuremath{\;|\;}})
+  $t$ : Term ::= $x$ // $\lambda x.t$ // $t\;t$
+\end{bnf}
+
+%%======================================================================
+%% TEST 19 – Tilde workaround (should still work after fix)
+%%======================================================================
+\Test{Tilde workaround (backwards compat)}
+\begin{bnf}(or-sym = {$~|~$})
+  $e$ : Expr ::=
+  | $x$ // $\lambda x.e$
+\end{bnf}
+
+%%======================================================================
+%% TEST 20 – Single alternative (no single-line-delim split at all)
+%%======================================================================
+\Test{Single alternative (no //) — no split needed}
+\begin{bnf}
+  $e$ : Expr ::= $\lambda x.e$ : lambda abstraction
+\end{bnf}
+
+%%======================================================================
+%% TEST 21 – Many single-line alternatives (stress test)
+%%======================================================================
+\Test{Many single-line alternatives}
+\begin{bnf}(or-sym = {$\;|\;$})
+  $e$ : Expr ::=
+  | $a$ // $b$ // $c$ // $d$ // $e$ // $f$ : lots of forms
+\end{bnf}
+
+%%======================================================================
+%% TEST 22 – Mixed new-line and single-line delimiters
+%%======================================================================
+\Test{Mixed new-line and single-line delimiters}
+\begin{bnf}
+  $e$ : Expr ::=
+  | $x$ : variable
+  | $n$ // $m$ : numerals
+  | $e + e$ // $e - e$ : arithmetic
+  | $\lambda x.e$ : abstraction
+\end{bnf}
+
+%%======================================================================
+%% DONE
+%%======================================================================
+\vspace{1em}
+\noindent\textbf{All \thetestnum\ tests compiled successfully.}
+\end{document}

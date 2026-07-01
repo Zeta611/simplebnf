@@ -14,10 +14,17 @@
         \regex_replace_once:nnN { ^\s+ } {} \l_tmpa_tl
         \regex_replace_once:nnN { \s+$ } {} \l_tmpa_tl
 
-        \regex_replace_all:NVN
-          \l__simplebnf_single_line_delim_regex
-          \l__simplebnf_or_sym_tl
-          \l_tmpa_tl
+        \regex_split:NVN
+          \l__simplebnf_single_line_delim_regex \l_tmpa_tl \l_tmpa_seq
+        \tl_clear:N \l_tmpa_tl
+        \bool_set_true:N \l_tmpb_bool
+        \seq_map_inline:Nn \l_tmpa_seq
+          {
+            \bool_if:NTF \l_tmpb_bool
+              { \bool_set_false:N \l_tmpb_bool }
+              { \tl_put_right:NV \l_tmpa_tl \l__simplebnf_or_sym_tl }
+            \tl_put_right:Nn \l_tmpa_tl { ##1 }
+          }
 
         \regex_split:NVNTF \l__simplebnf_comment_regex \l_tmpa_tl \l_tmpa_seq
           { % put an alternate syntax form
@@ -36,6 +43,7 @@
           }
           { % no annotation
             \__simplebnf_typeset_rhs_with_breaks:N \l_tmpa_tl
+            \tl_put_right:Nn \l__simplebnf_table_tl { & }
           }
       }
   }

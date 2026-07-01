@@ -1,0 +1,11 @@
+\documentclass{article}
+\usepackage{simplebnf}
+
+\SetBNFConfig{or-sym = {$\;|\;$}}
+
+\begin{document}
+\begin{bnf}
+  $e$ : Expr ::=
+  | $x$ // $\lambda x.e$
+\end{bnf}
+\end{document}
