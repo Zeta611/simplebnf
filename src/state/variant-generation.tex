@@ -1,8 +1,0 @@
-%% Argument-variant generation for expl3 functions used by the engine.
-%%
-%% These let the typesetting code pass regex/tl variables (V) where the base
-%% signatures expect literal n-type arguments.
-\cs_generate_variant:Nn \regex_split:NnNTF {NVNTF}
-\cs_generate_variant:Nn \regex_split:NnN {NVN}
-\cs_generate_variant:Nn \regex_set:Nn {NV}
-\cs_generate_variant:Nn \seq_set_split:Nnn { NVV }
