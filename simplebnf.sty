@@ -22,7 +22,8 @@
 \DeclareRelease{1.0.0}{2023-11-25}{simplebnf-2023-11-25.sty}
 \DeclareRelease{1.0.1}{2025-10-24}{simplebnf-2025-10-24.sty}
 \DeclareRelease{1.1.0}{2026-05-19}{simplebnf-2026-05-19.sty}
-\DeclareCurrentRelease{}{2026-07-01}
+\DeclareRelease{1.2.0}{2026-07-01}{simplebnf-2026-07-01.sty}
+\DeclareCurrentRelease{}{2026-09-20}
 
 %% Package dependencies.
 %%
@@ -35,8 +36,8 @@
 
 \ProvidesExplPackage
   {simplebnf}
-  {2026-07-01}
-  {1.2.0}
+  {2026-09-20}
+  {1.3.0}
   {A simple package to format Backus–Naur form}
 
 %% ---------------------------------------------------------------------------
@@ -99,7 +100,10 @@
 %% The bnf environment is internally a tabularray environment; its inner row
 %% separation tracks the row-sep key.
 \NewTblrEnviron{@simplebnf_tblr_env}
-\SetTblrInner[@simplebnf_tblr_env]{rowsep=\l__simplebnf_row_sep_dim}
+\SetTblrInner[@simplebnf_tblr_env]{
+  colspec=llcll,
+  rowsep=\l__simplebnf_row_sep_dim
+}
 
 %% Parser state: scratch variables, function variants, and messages.
 %% The accumulator for the generated table body.
@@ -257,7 +261,7 @@
       \l__simplebnf_relation_regex
       { #1 }
       \l__simplebnf_lhs_rhs_pair_seq
-      {
+      { % Relation found
         % LHS
         \seq_pop_left:NN \l__simplebnf_lhs_rhs_pair_seq \l__simplebnf_lhs_tl
         % Rule relation
@@ -294,7 +298,9 @@
         \bool_set_true:N \l__simplebnf_first_alternative_bool
         \seq_map_function:NN \l__simplebnf_alternative_seq \__simplebnf_typeset_rhs:n
       }
-      { \msg_error:nnn { simplebnf } { no-rel } { #1 } }
+      { % No relation found
+        \__simplebnf_typeset_lhs:n { #1 }
+      }
   }
 % Emit a comment row and optionally process a following production.
 % #1 - comment text (from the braced argument of \bnfcomment)
@@ -356,9 +362,9 @@
 %% redefinable output hooks.
 %% Typeset a BNF grammar.
 %% #1 - key-value options for simplebnf
-%% #2 - tabularray specification (default: llcll)
+%% #2 - tabularray specification (default: configured backend layout)
 %% #3 - grammar body
-\NewDocumentEnvironment { bnf } { d() O{llcll} +b }
+\NewDocumentEnvironment { bnf } { d() O{} +b }
   {
     \IfNoValueF { #1 }
       { \keys_set:nn { simplebnf } { #1 } }
