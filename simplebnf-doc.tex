@@ -538,6 +538,9 @@ The easiest way to fix this is to actually use a font that provides the symbol, 
 ]
 \end{listing}
 
+If you are using \verb/column{4} = {mode = dmath}/ in \verb/\SetBNFLayout/ to typeset syntactic forms in math mode by default, the preset \verb/or-sym = $|$/ will not typeset spacings between inline alternatives.
+In this case, you can add spacings manually, e.g., \verb/or-sym = {\ensuremath{\;\vert\;}}/.
+
 
 \section{The deprecated \texttt{bnfgrammar} environment}
 Prior to version 1.0.0, the package provided a sole environment \verb/bnfgrammar/ for typesetting grammars.
